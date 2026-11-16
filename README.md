@@ -9,6 +9,7 @@ their sugar density, and keep your label library entirely on your device.
 
 [Open SugarLens](https://edoardorex.github.io/sugarlens/) ·
 [How it works](#scan-read-understand) ·
+[Mobile previews](#optimized-for-mobile) ·
 [Medical limitations](#important-medical-limitations)
 
 </div>
@@ -49,16 +50,27 @@ Future scans recall your own saved entry. Recipes and nutrition labels can chang
 English interface, local number formatting, decimal dot or comma entry.
 No account, API key, subscription, product API, analytics, external fonts, or backend.
 
+## Optimized for mobile
+
 On your phone, the bottom bar keeps **Scan product** and **New label** within
 reach. Forms and results open in a full-width sheet; inputs avoid automatic
 mobile zoom, and smaller screens stack label fields instead of squeezing them.
-See the [phone-sized result](public/preview-mobile.png).
 
 Sheets adjust to the visible screen when the keyboard opens, without scrolling
 the page behind them. Closing a changed label asks before discarding unsaved
 details or results. Saving clears an old library search so the new entry stays
 visible. Once labels are saved, a shorter phone header brings the library closer
 without hiding the medical limitations.
+
+<p align="center">
+  <a href="docs/screenshots/phone-library.png"><img src="docs/screenshots/phone-library.png" width="300" alt="SugarLens in a smartphone frame, showing medical limitations, saved product labels, sugar-density bands, and bottom scan actions" /></a>
+  <a href="docs/screenshots/phone-sugar-result.png"><img src="docs/screenshots/phone-sugar-result.png" width="300" alt="SugarLens's phone-sized result showing sugar density, total carbohydrate, portion arithmetic, and a warning that lower sugar is not diabetes-safe" /></a>
+</p>
+
+*Your label library and a sugar-density result. Phone-sized app screenshots in a
+generic smartphone frame; illustrative labels, not product recommendations.*
+
+Tap either preview to open the full-size image.
 
 ## What the score actually means
 
