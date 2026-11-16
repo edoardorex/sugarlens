@@ -15,6 +15,10 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@tensorflow-models/coco-ssd": "^2.2.3",
+    "@tensorflow/tfjs-backend-cpu": "^4.22.0",
+    "@tensorflow/tfjs-converter": "^4.22.0",
+    "@tensorflow/tfjs-core": "^4.22.0",
     "@zxing/browser": "^0.1.5",
     "@zxing/library": "^0.21.3"
   },

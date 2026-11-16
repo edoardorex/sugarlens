@@ -5,12 +5,14 @@
 ### A little clarity in your basket.
 
 A minimal, phone-first food-label helper. Scan supermarket products, understand
-their sugar density, and keep your label library entirely on your device.
+their sugar density, get cooking ideas from confirmed ingredients, and keep
+your label library entirely on your device. Ingredient photos stay private.
 
 [Open SugarLens](https://edoardorex.github.io/sugarlens/) ·
 [How it works](#scan-choose-see) ·
 [Mobile previews](#optimized-for-mobile) ·
 [Languages](#languages--regional-default) ·
+[Photo recipes](#photo-confirm-cook) ·
 [Medical limitations](#important-medical-limitations) ·
 [Online lookup & privacy](#local-library-optional-online-lookup)
 
@@ -66,10 +68,66 @@ personalised diabetes risk or safety score.
 | **Installable and offline** | Home-screen support; app and scanner assets cached after the first online visit |
 | **Comfortable on small screens** | Reachable scan/add bar, full-width sheets, large inputs, and 320px layouts |
 | **Four languages** | English, Italian, Spanish and French; regional default and remembered manual switch |
+| **Photo → confirm → cook** | On-device ingredient suggestions, editable selections and step-by-step recipe ideas; no image uploads |
 
 Localized interface, dates and number formatting; decimal dot or comma entry.
 No account, API key, subscription, analytics, external fonts, or backend.
 Online catalogue lookup is optional; your saved label library stays local.
+
+## Photo. Confirm. Cook.
+
+Open **Photo & recipe**, then **Take a photo** or **Choose a photo**. You can
+also skip the photo and select ingredients manually.
+
+1. **Identify ingredients locally.** Recognition runs in a background worker
+   on your device, not an image-upload service. The first use downloads about
+   **18 MB of model files**; slow connections or phones may take a while.
+2. **Check the suggestions.** This initial recogniser supports **bananas,
+   apples, oranges, broccoli and carrots**. It can miss or misidentify them,
+   and does not recognise every food. Add other available ingredients from
+   the list, remove wrong guesses, and explicitly confirm your selections.
+3. **Suggest a recipe.** Get a simple vegetable/protein pan or breakfast bowl,
+   using the ingredients you confirmed, with preparation steps, food-safety
+   reminders and carbohydrate context. Optional herbs and olive oil are
+   clearly identified as pantry extras, never assumed available.
+
+These are **cooking ideas with carbohydrate awareness, not recipes certified
+safe for diabetes or personalised meal plans**. There is no single diabetes
+diet. No added sweeteners are suggested, but fruit, pulses, grains, oats and
+yogurt can still contribute carbohydrate. Follow your own portion/carbohydrate
+plan and check actual labels. Photos cannot establish amounts, macros,
+allergens, freshness or doneness. No nutrition totals or diabetes-risk score
+are inferred from a photo; never use this feature for insulin dosing, a hypo,
+emergencies, or treatment changes.
+
+**Save recipe on this device** retains your **last confirmed ingredient list**
+and recreates its instructions in the selected language. Saving another
+replaces it. Photos are never stored in the recipe or uploaded, and the
+temporary preview is discarded when the sheet closes. The device's native
+camera/gallery may handle captured photos according to its own settings.
+Recipe storage is separate from labels; existing label JSON backups do not
+include the saved recipe. **Forget saved recipe** removes it without changing
+your product library. Failed writes and unreadable saved data are explicit;
+unreadable data is protected until you choose to forget it.
+
+The detector uses **TensorFlow.js / COCO-SSD** (Apache-2.0). Only when you press
+**Identify ingredients locally** are model files requested from their public
+download server. These are GET-only model downloads, with no cookies, page
+referrer, photo, ingredient list or health data sent; the server still receives
+ordinary connection metadata. After a successful run, recognition can work
+offline if the browser retains its separate `sugarlens.vision.v1` cache.
+**Ready offline** describes the app and scanner, not a model you have not yet
+downloaded. Manual ingredient selection and recipe generation always work
+offline after the app is prepared. Cancelled, unsupported or failed recognition
+leaves manual selection available; nothing is guessed into a recipe without
+your confirmation.
+
+<p align="center">
+  <a href="docs/screenshots/phone-recipe.png"><img src="docs/screenshots/phone-recipe.png" width="300" alt="SugarLens recipe on a smartphone: confirmed broccoli, chickpeas and brown rice, practical cooking steps and a clear non-medical limitation" /></a>
+</p>
+
+*A recipe from illustrative, manually confirmed ingredients. Not a personal
+dietary recommendation or a demonstration of recognition accuracy.*
 
 ## Optimized for mobile
 
@@ -194,7 +252,9 @@ sent.** Requests omit cookies and referrers. No product photos are fetched.
 Turn off **Online lookup** for local-only scanning and manual label entry.
 Saved barcodes always recall your local record first, even when online; they
 are not silently refreshed or overwritten. Manual entry never starts a lookup
-unless you tap its lookup button. There is no OCR.
+unless you tap its lookup button. There is no OCR. The separate recipe feature
+recognises a limited set of visible foods locally; it does not read nutrition
+labels or use the barcode-lookup switch for its opt-in model download.
 
 Lookup uses the Open Food Facts v3 product endpoint, not a search-as-you-type API.
 Only reported **total sugars and total carbohydrate per 100 g/ml** are used;
@@ -220,7 +280,7 @@ when you choose to click them.
 Products are stored in `localStorage`, scoped to the browser profile and origin.
 Data is **not encrypted**; anyone using that profile can read it. No automatic
 sync between devices. Clearing site data, private browsing, or browser storage
-eviction can remove your library, preferences or offline cache. Keep private JSON backups.
+eviction can remove your library, saved recipe, preferences or offline cache. Keep private JSON backups of labels.
 The app reports failed saves and protects unreadable storage from silent overwrite.
 
 The service worker deletes only its own `sugarlens-` caches, not other apps' caches.
@@ -282,7 +342,7 @@ Build with `npm run build -- --base=/sugarlens/` and publish the contents of
 serve `dist/` after `npm run build`. Adjust the base path for other subdirectories.
 
 New service workers wait rather than abruptly replacing an open app. Use
-**Update available** to reload when ready; unsaved label edits require confirmation.
+**Update available** to reload when ready; open label or recipe sheets require confirmation.
 
 ## Sources
 
@@ -291,6 +351,9 @@ Thresholds and explanatory sources, checked on 16 November 2026:
 - [NHS: how to read food labels](https://www.nhs.uk/live-well/eat-well/food-guidelines-and-food-labels/how-to-read-food-labels/)
 - [UK government: front-of-pack nutrition labelling guidance](https://www.gov.uk/government/publications/front-of-pack-nutrition-labelling-guidance)
 - [Diabetes UK: food, carbohydrates and individual care in type 1 diabetes](https://www.diabetes.org.uk/living-with-diabetes/eating/i-have-type-1-diabetes)
+- [Diabetes UK: a healthy, balanced diet—there is no single diabetes diet](https://www.diabetes.org.uk/living-with-diabetes/eating/what-is-a-healthy-balanced-diet)
+- [FoodSafety.gov: safe minimum internal cooking temperatures](https://www.foodsafety.gov/food-safety-charts/safe-minimum-internal-temperatures)
+- [TensorFlow.js COCO-SSD: supported classes and model documentation](https://github.com/tensorflow/tfjs-models/tree/master/coco-ssd)
 - [Open Food Facts: API documentation and usage guidelines](https://openfoodfacts.github.io/openfoodfacts-server/api/)
 
 These organisations do not endorse SugarLens. The in-app explanations are
@@ -298,8 +361,9 @@ available offline; linked original documents need internet access.
 
 ## Tiny by design
 
-Vanilla JavaScript, Vite, ZXing, and a small build-generated service worker.
-No UI framework or server. Optional direct catalogue requests; no image uploads.
+Vanilla JavaScript, Vite, ZXing, a lazy-loaded TensorFlow.js detector, and a small
+build-generated service worker. No UI framework or server. Optional direct
+catalogue/model downloads; no image uploads.
 
 ```text
 src/
@@ -308,6 +372,9 @@ src/
   lookup.js           Validated Open Food Facts lookup, cancellation and timeout
   feedback.js         Tap-unlocked sound and optional vibration
   i18n.js             Offline translations, regional default and language switching
+  recipes.js          Confirmed ingredient rules and non-medical cooking ideas
+  recipe-ui.js        Private photo preview, ingredient confirmation and recipe saving
+  vision-worker.js    On-device COCO-SSD recognition and opt-in model caching
   scanner.js          On-device decoding
   offline.js          Install and update lifecycle
   service-worker.js   Build-time precache template

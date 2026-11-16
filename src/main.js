@@ -9,6 +9,7 @@ import { cameraError, createScanner, stopVideo } from './scanner.js';
 import { registerOffline } from './offline.js';
 import { catalogueCode, lookupNutrition } from './lookup.js';
 import { createFeedback } from './feedback.js';
+import { initRecipes } from './recipe-ui.js';
 import { LANGUAGE_KEY, LANGUAGES, detectLanguage, getLanguage, setLanguage, t, setText, translateStatic, translatedMarkup, refreshTranslations, formatNumber } from './i18n.js';
 
 setLanguage(detectLanguage(navigator.languages, Intl.DateTimeFormat().resolvedOptions().timeZone));
@@ -60,6 +61,7 @@ document.querySelector('#app').innerHTML = `
       <div class="hero-orbit" aria-hidden="true"><div class="sugar-cube cube-one"></div><div class="sugar-cube cube-two"></div><div class="orbit-dot"></div></div>
     </section>
     <aside class="safety-note" aria-label="Medical limitation"><span class="note-icon" aria-hidden="true">i</span><p><strong>A label helper. Not a diabetes safety rating.</strong> Lower sugar does not mean diabetes-safe. Total carbohydrate, portions and your individual care plan matter. Educational use only.</p></aside>
+    <section class="recipe-launch" aria-labelledby="recipe-launch-title"><div><p class="eyebrow">A LITTLE KITCHEN INSPIRATION</p><h2 id="recipe-launch-title">What could you cook?</h2><p>Photo. Confirm ingredients. Get a cooking idea, not a medical meal plan.</p></div><button class="button secondary" id="open-recipes" type="button">Photo &amp; recipe</button></section>
     <section class="storage-error" id="storage-error" role="alert" hidden><p id="storage-message"></p><div><button class="button secondary" id="export-raw" type="button">Export original data</button><button class="text-button" id="reset-storage" type="button">Reset local labels</button></div></section>
     <section class="collection" aria-labelledby="saved-title">
       <div class="section-heading"><div><p class="eyebrow">YOUR PRIVATE LITTLE LIBRARY</p><h2 id="saved-title" tabindex="-1">Saved labels <span id="saved-count">0</span></h2></div><div class="backup-actions"><button class="text-button" id="export" type="button">Export</button><button class="text-button" id="import" type="button">Import</button></div></div>
@@ -148,6 +150,7 @@ const form = document.querySelector('#label-form');
 const productDialog = document.querySelector('#product-dialog');
 const cameraDialog = document.querySelector('#camera-dialog');
 const guideDialog = document.querySelector('#guide-dialog');
+const recipes = initRecipes();
 let video = document.querySelector('#camera');
 let cleanForm = formSnapshot();
 
@@ -198,6 +201,7 @@ document.querySelector('#language').addEventListener('change', (event) => {
   document.documentElement.lang = getLanguage();
   document.title = `SugarLens — ${t('A little clarity')}`;
   refreshTranslations();
+  recipes.refresh();
   updateBasis();
   renderPreferences();
   renderLibrary();
@@ -788,6 +792,7 @@ for (const id of ['open-guide', 'footer-guide', 'install-help']) document.queryS
 document.querySelector('#close-guide').addEventListener('click', () => guideDialog.close());
 document.querySelector('#update').addEventListener('click', () => {
   if (productDialog.open && !confirm(t('Reload to update the app? Unsaved label changes will be lost.'))) return;
+  if (document.querySelector('#recipe-dialog').open && !confirm(t('Reload to update the app? Unsaved recipe changes will be lost.'))) return;
   activateUpdate?.();
 });
 let updating = false;
@@ -815,7 +820,7 @@ registerOffline({
   },
   onError: (message) => { setText(document.querySelector('#offline-status'), message); },
   onUpdate: (activate) => {
-    activateUpdate = () => { updating = true; closeCamera(); activate(); };
+    activateUpdate = () => { updating = true; closeCamera(); recipes.close(); activate(); };
     document.querySelector('#update').hidden = false;
   },
 });
