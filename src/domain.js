@@ -48,7 +48,11 @@ export function scannedBarcode(value) {
 
 function checkedNumber(value, label, options = {}) {
   if (typeof value !== 'number' || !Number.isFinite(value)) throw new Error(`Invalid ${label}.`);
-  return parseNumber(value, label, options);
+  const { max = 100, positive = false } = options;
+  if (value < 0 || value > max || (positive && value <= 0)) {
+    throw new Error(`${label} must be ${positive ? 'greater than 0' : '0'} to ${max}.`);
+  }
+  return value;
 }
 
 export function validateProduct(value) {
@@ -69,7 +73,12 @@ export function validateProduct(value) {
   if (carbs !== null && sugars > carbs) throw new Error('Sugars are part of total carbohydrate. Check the values and use the same label basis.');
   const portion = value.portion === null ? null : checkedNumber(value.portion, 'your portion', { positive: true, max: 5000 });
   if (!isDate(value.enteredAt)) throw new Error('Invalid label entry date.');
-  return { id: value.id, name: value.name.trim(), barcode, type: value.type, basis: value.basis, quantity, sugars, carbs, portion, enteredAt: value.enteredAt };
+  const product = { id: value.id, name: value.name.trim(), barcode, type: value.type, basis: value.basis, quantity, sugars, carbs, portion, enteredAt: value.enteredAt };
+  if (value.source !== undefined) {
+    if (!barcode || value.source?.provider !== 'openfoodfacts' || !isDate(value.source.retrievedAt)) throw new Error('Invalid catalogue source.');
+    product.source = { provider: 'openfoodfacts', retrievedAt: value.source.retrievedAt };
+  }
+  return product;
 }
 
 export function sugarBand(type, sugars, quantity = 100) {
@@ -77,11 +86,14 @@ export function sugarBand(type, sugars, quantity = 100) {
     throw new Error('A valid sugar amount and food/drink type are required.');
   }
   const { low, high } = THRESHOLDS[type];
-  // Validated labels have at most three decimals; compare without division error.
-  const sugarUnits = Math.round(sugars * 1000) * 10000;
-  const quantityUnits = Math.round(quantity * 1000);
-  if (sugarUnits <= quantityUnits * Math.round(low * 100)) return { level: 1, key: 'lower', label: 'Lower sugar' };
-  if (sugarUnits <= quantityUnits * Math.round(high * 100)) return { level: 2, key: 'medium', label: 'Medium sugar' };
+  // Catalogue conversions can have more precision than handwritten labels.
+  const within = (threshold) => {
+    const amount = sugars * 100;
+    const boundary = quantity * threshold;
+    return amount <= boundary + Number.EPSILON * Math.max(amount, boundary) * 2;
+  };
+  if (within(low)) return { level: 1, key: 'lower', label: 'Lower sugar' };
+  if (within(high)) return { level: 2, key: 'medium', label: 'Medium sugar' };
   return { level: 3, key: 'higher', label: 'Higher sugar' };
 }
 

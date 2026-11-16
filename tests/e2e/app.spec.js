@@ -89,6 +89,11 @@ test('offline reload and the lazy camera decoder work with no external network c
 });
 
 test('a real EAN scan opens a blank new label and later recalls its saved nutrition', async ({ page }) => {
+  let lookups = 0;
+  await page.route('https://world.openfoodfacts.org/api/v3/product/**', async (route) => {
+    lookups++;
+    await route.fulfill({ status: 404, contentType: 'application/json', body: '{}' });
+  });
   const barcodeImage = (await bwipjs.toBuffer({
     bcid: 'ean13', text: '4006381333931', scale: 3, height: 15,
     includetext: false, backgroundcolor: 'FFFFFF', paddingwidth: 8, paddingheight: 8,
@@ -117,7 +122,7 @@ test('a real EAN scan opens a blank new label and later recalls its saved nutrit
   await page.goto('/');
   await page.getByRole('button', { name: 'Scan a product' }).click();
   await expect(page.locator('#product-dialog')).toBeVisible();
-  await expect(page.locator('#entry-note')).toContainText('New barcode');
+  await expect(page.locator('#entry-note')).toContainText('not in Open Food Facts');
   await expect(page.getByLabel('Total sugars (g)', { exact: true })).toHaveValue('');
   await expect(page.getByLabel('Product barcode', { exact: true })).toHaveValue('04006381333931');
   expect(await page.evaluate(() => window.testTracks.every((track) => track.readyState === 'ended'))).toBe(true);
@@ -132,6 +137,141 @@ test('a real EAN scan opens a blank new label and later recalls its saved nutrit
   await expect(page.locator('.score-main')).toContainText('Medium sugar');
   await expect(page.locator('#entry-note')).toContainText('recheck');
   await expect.poll(() => page.evaluate(() => window.testTracks.every((track) => track.readyState === 'ended'))).toBe(true);
+  expect(lookups).toBe(1);
+});
+
+test('a real barcode scan fetches nutrition for review, scores in color and saves its source offline', async ({ page, context }) => {
+  let lookups = 0;
+  await page.route('https://world.openfoodfacts.org/api/v3/product/**', async (route) => {
+    lookups++;
+    expect(new URL(route.request().url()).pathname).toBe('/api/v3/product/4006381333931.json');
+    await route.fulfill({ json: {
+      status: 'success', result: { id: 'product_found' },
+      product: { code: '4006381333931', product_name: 'Example catalogue drink', categories_tags: ['en:beverages'], nutriments: { sugars_100g: 11.2501, carbohydrates_100g: 12.34567 } },
+    } });
+  });
+  const image = (await bwipjs.toBuffer({
+    bcid: 'ean13', text: '4006381333931', scale: 3, height: 15,
+    includetext: false, backgroundcolor: 'FFFFFF', paddingwidth: 8, paddingheight: 8,
+  })).toString('base64');
+  await page.addInitScript((source) => {
+    navigator.mediaDevices.getUserMedia = async () => {
+      const image = new Image();
+      image.src = `data:image/png;base64,${source}`;
+      await image.decode();
+      const canvas = document.createElement('canvas');
+      canvas.width = 640;
+      canvas.height = 480;
+      const ctx = canvas.getContext('2d');
+      const stream = canvas.captureStream(10);
+      const draw = () => {
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, 640, 480);
+        ctx.drawImage(image, (640 - image.width) / 2, (480 - image.height) / 2);
+        if (stream.getTracks().some((track) => track.readyState === 'live')) requestAnimationFrame(draw);
+      };
+      requestAnimationFrame(draw);
+      return stream;
+    };
+  }, image);
+  await page.goto('/');
+  await page.locator('#scan-product').click();
+  await expect(page.getByLabel('Product name', { exact: true })).toHaveValue('Example catalogue drink');
+  await expect(page.getByLabel('Product type', { exact: true })).toHaveValue('');
+  await expect(page.getByLabel('Total sugars (g)', { exact: true })).toHaveValue('11.2501');
+  await expect(page.getByLabel('Your portion', { exact: false })).toHaveValue('');
+  await page.getByRole('button', { name: 'Show sugar score' }).click();
+  await expect(page.locator('#result')).not.toBeVisible();
+  await page.getByLabel('Product type', { exact: true }).selectOption('drink');
+  await page.getByRole('button', { name: 'Show sugar score' }).click();
+  await expect(page.locator('.score-card')).toHaveClass('score-card higher');
+  await expect(page.locator('.score-segments .selected')).toHaveClass('higher selected');
+  await expect(page.locator('#source-note')).toContainText('Open Food Facts');
+  await expect(page.locator('.result-caution')).toContainText('Lower sugar does not mean diabetes-safe');
+  await page.locator('#save-label').click();
+  await page.locator('#close-product').click();
+  await expect(page.locator('#offline-status')).toContainText('Ready offline');
+  await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true);
+  await context.setOffline(true);
+  await page.reload();
+  await page.locator('#scan-product').click();
+  await expect(page.locator('#source-note')).toContainText('Open Food Facts');
+  await expect(page.locator('.score-main')).toContainText('Higher sugar');
+  expect(lookups).toBe(1);
+});
+
+test('online lookup can be cancelled without stale results, and local-only mode persists', async ({ page }) => {
+  let release;
+  const wait = new Promise((resolve) => { release = resolve; });
+  await page.route('https://world.openfoodfacts.org/api/v3/product/**', async (route) => {
+    await wait;
+    await route.fulfill({ json: { status: 'success', product: { code: '4006381333931', product_name: 'Late result', nutriments: { sugars_100g: 2 } } } });
+  });
+  await page.goto('/');
+  await page.locator('#manual-product').click();
+  await page.getByText('Product barcode optional', { exact: true }).click();
+  await page.getByLabel('Product barcode', { exact: true }).fill('4006381333931');
+  const request = page.waitForRequest('https://world.openfoodfacts.org/api/v3/product/**');
+  await page.locator('#lookup-online').click();
+  await request;
+  await expect(page.locator('#lookup-state')).toBeVisible();
+  await page.locator('#cancel-lookup').click();
+  await page.getByLabel('Product name', { exact: true }).fill('My manual label');
+  release();
+  await expect(page.getByLabel('Product name', { exact: true })).toHaveValue('My manual label');
+  page.once('dialog', (dialog) => dialog.accept());
+  await page.locator('#close-product').click();
+  await page.locator('#online-lookup').uncheck();
+  await page.reload();
+  await expect(page.locator('#online-lookup')).not.toBeChecked();
+  await expect(page.locator('#lookup-privacy')).toContainText('Local-only mode');
+  await page.locator('#manual-product').click();
+  await expect(page.locator('#lookup-online')).toBeDisabled();
+});
+
+test('sound and vibration are user-controlled and scores pulse once per band number', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.pulses = [];
+    window.tones = 0;
+    navigator.vibrate = (pattern) => { if (pattern !== 0) window.pulses.push(pattern); return true; };
+    window.AudioContext = class {
+      state = 'running';
+      currentTime = 0;
+      destination = {};
+      createOscillator() {
+        return { frequency: { setValueAtTime() {} }, connect() {}, disconnect() {}, start() { window.tones++; }, stop() {} };
+      }
+      createGain() {
+        return { gain: { setValueAtTime() {}, linearRampToValueAtTime() {}, exponentialRampToValueAtTime() {} }, connect() {}, disconnect() {} };
+      }
+    };
+  });
+  await page.goto('/');
+  await checkLabel(page, { sugars: '30', carbs: '60' });
+  await expect.poll(() => page.evaluate(() => window.tones)).toBe(3);
+  expect(await page.evaluate(() => window.pulses)).toEqual([[20, 65, 20, 65, 20]]);
+  page.once('dialog', (dialog) => dialog.accept());
+  await page.locator('#close-product').click();
+  await page.locator('#scan-sound').uncheck();
+  await page.locator('#scan-vibration').uncheck();
+  await checkLabel(page);
+  expect(await page.evaluate(() => window.tones)).toBe(3);
+  expect(await page.evaluate(() => window.pulses.length)).toBe(1);
+});
+
+test('unsupported sensory APIs are explained without blocking visual scores', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.AudioContext = undefined;
+    window.webkitAudioContext = undefined;
+    navigator.vibrate = undefined;
+  });
+  await page.goto('/');
+  await expect(page.locator('#scan-sound')).toBeDisabled();
+  await expect(page.locator('#scan-vibration')).toBeDisabled();
+  await expect(page.locator('#feedback-note')).toContainText('unavailable');
+  await checkLabel(page);
+  await expect(page.locator('.score-card')).toHaveClass('score-card lower');
+  await expect(page.locator('.score-legend')).toContainText('1 Lower');
 });
 
 test('corrupt local data is protected, but checking a label is still possible', async ({ page }) => {
