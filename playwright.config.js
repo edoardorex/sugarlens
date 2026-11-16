@@ -4,7 +4,7 @@ export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: true,
   reporter: 'list',
-  use: { baseURL: 'http://127.0.0.1:51848', trace: 'retain-on-failure', serviceWorkers: 'allow' },
+  use: { baseURL: 'http://127.0.0.1:51848', trace: 'retain-on-failure', serviceWorkers: 'allow', locale: 'en-GB', timezoneId: 'Europe/London' },
   projects: [
     { name: 'desktop', use: { ...devices['Desktop Chrome'] } },
     { name: 'phone', use: { ...devices['iPhone 13'], defaultBrowserType: 'chromium' } },

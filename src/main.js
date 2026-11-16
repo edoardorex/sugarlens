@@ -1,6 +1,6 @@
 import './style.css';
 import {
-  STORAGE_KEY, THRESHOLDS, escapeHTML as h, evaluateProduct, formatGrams,
+  STORAGE_KEY, THRESHOLDS, escapeHTML as h, evaluateProduct, formatGrams as rawGrams,
   normalizeBarcode, parseNumber, scannedBarcode, todayISO, upsertProduct,
   validateBackup, validateProduct,
 } from './domain.js';
@@ -9,6 +9,15 @@ import { cameraError, createScanner, stopVideo } from './scanner.js';
 import { registerOffline } from './offline.js';
 import { catalogueCode, lookupNutrition } from './lookup.js';
 import { createFeedback } from './feedback.js';
+import { LANGUAGE_KEY, LANGUAGES, detectLanguage, getLanguage, setLanguage, t, setText, translateStatic, translatedMarkup, refreshTranslations, formatNumber } from './i18n.js';
+
+setLanguage(detectLanguage(navigator.languages, Intl.DateTimeFormat().resolvedOptions().timeZone));
+let languageReadError;
+try {
+  const saved = localStorage.getItem(LANGUAGE_KEY);
+  if (saved !== null) setLanguage(saved);
+} catch (error) { languageReadError = error; }
+function formatGrams(value) { return t(rawGrams(value, getLanguage())); }
 
 const scanIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M8 3H4a1 1 0 0 0-1 1v4m13-5h4a1 1 0 0 1 1 1v4M3 16v4a1 1 0 0 0 1 1h4m8 0h4a1 1 0 0 0 1-1v-4M8 8v8m4-8v8m4-8v8"/></svg>';
 const arrowIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m8 5 7 7-7 7"/></svg>';
@@ -22,6 +31,7 @@ let toastTimer;
 let activateUpdate;
 let deferredInstall;
 let lookupController;
+let quickScan = false;
 let preferences = { online: true, sound: true, vibration: true };
 const PREFERENCES_KEY = 'sugarlens.preferences.v1';
 
@@ -29,13 +39,13 @@ document.querySelector('#app').innerHTML = `
   <a class="skip-link" href="#saved-title">Skip to saved labels</a>
   <header class="topbar">
     <a class="brand" href="./" aria-label="SugarLens home"><span>${scanIcon}</span>SugarLens<span class="brand-dot">.</span></a>
-    <button class="icon-button" id="open-guide" type="button" aria-label="About, privacy and medical limitations">?</button>
+    <div class="topbar-actions"><div class="language-selector"><label class="sr-only" for="language">Language</label><select id="language" aria-describedby="language-help">${Object.entries(LANGUAGES).map(([key, name]) => `<option value="${key}">${name}</option>`).join('')}</select></div><button class="icon-button" id="open-guide" type="button" aria-label="About, privacy and medical limitations">?</button></div>
   </header>
   <main>
     <section class="hero" aria-labelledby="hero-title">
       <div class="eyebrow"><span class="local-dot"></span> PRIVATE LABEL HELP. NOT MEDICAL ADVICE.</div>
       <h1 id="hero-title">A little clarity<br />in your <span>basket.</span></h1>
-      <p>Scan the barcode. Read the label.<br />Understand the sugar, without the guesswork.</p>
+      <p>Scan. Choose your amount.<br />See the sugar. Saved automatically.</p>
       <button class="button primary scan-cta" id="scan-product" type="button">${scanIcon} Scan a product</button>
       <button class="text-button" id="manual-product" type="button">Enter a label manually ${arrowIcon}</button>
       <div class="scan-settings" aria-label="Scan preferences">
@@ -64,10 +74,24 @@ document.querySelector('#app').innerHTML = `
     <button class="button secondary" id="dock-label" type="button">+ New label</button>
   </nav>
   <dialog id="product-dialog" aria-labelledby="product-title">
-    <div class="sheet-heading"><div><p class="eyebrow" id="product-kicker">LET THE LABEL DO THE TALKING</p><h2 id="product-title">Read a label</h2></div><button class="icon-button" id="close-product" type="button" aria-label="Close label">&times;</button></div>
+    <div class="sheet-heading"><div><p class="eyebrow" id="product-kicker">LET THE LABEL DO THE TALKING</p><h2 id="product-title" tabindex="-1">Read a label</h2></div><button class="icon-button" id="close-product" type="button" aria-label="Close label">&times;</button></div>
     <p class="entry-note" id="entry-note">Nutrition stays on this device. Copy the current package, not a guessed value.</p>
     <div class="lookup-state" id="lookup-state" role="status" hidden><span class="lookup-spinner" aria-hidden="true"></span><p>Finding nutrition on Open Food Facts...</p><button class="text-button" id="cancel-lookup" type="button">Cancel and enter manually</button></div>
     <p class="source-note" id="source-note" hidden></p>
+    <section id="scan-missing" class="scan-missing" hidden aria-label="Scan lookup status">
+      <p id="missing-reason"></p>
+      <button class="button primary full-width" id="missing-scan" type="button">Scan again ${scanIcon}</button>
+      <button class="text-button full-width" id="missing-manual" type="button">Enter a label manually</button>
+    </section>
+    <section id="quick-portion" hidden aria-label="Choose your amount">
+      <div class="quick-types" role="group" aria-label="Food or drink"><button class="button secondary" type="button" data-quick-type="food">Food · g</button><button class="button secondary" type="button" data-quick-type="drink">Drink · ml</button></div>
+      <p class="field-help" id="quick-type-note">Type from the catalogue or saved label. Check the package; change it here if needed.</p>
+      <h3>How much?</h3>
+      <div class="quick-amounts" id="quick-amounts"></div>
+      <form id="quick-form"><label for="quick-quantity" id="quick-quantity-label">Custom amount (g)</label><div class="quick-custom"><input id="quick-quantity" inputmode="decimal" required placeholder="Your amount" /><button class="button primary" type="submit">See score ${arrowIcon}</button></div></form>
+      <p class="field-help">Amounts are examples, not recommended servings. Choosing an amount shows the score and saves this label on your device.</p>
+      <p class="form-error" id="quick-error" role="alert" hidden></p>
+    </section>
     <form id="label-form">
       <details class="barcode-details"><summary>Product barcode <span id="barcode-caption">optional</span></summary><label class="sr-only" for="product-barcode">Product barcode</label><input id="product-barcode" name="barcode" inputmode="numeric" maxlength="14" placeholder="Printed EAN / UPC digits" /><div class="barcode-actions"><button class="text-button" id="lookup-online" type="button">Find nutrition online</button><button class="text-button" id="recall" type="button">Look up in my saved labels</button></div></details>
       <label for="product-name">Product name</label><input id="product-name" name="name" required maxlength="80" placeholder="e.g. Breakfast cereal" autocomplete="off" />
@@ -78,8 +102,9 @@ document.querySelector('#app').innerHTML = `
       <p class="form-error" id="form-error" role="alert" hidden></p>
       <button class="button primary full-width" type="submit">Show sugar score ${arrowIcon}</button>
     </form>
+    <p id="auto-save-status" class="auto-save-status" role="status" hidden></p>
     <section id="result" hidden aria-label="Sugar label result"></section>
-    <div id="result-actions" hidden><button class="button primary full-width" id="save-label" type="button">Save label locally</button><div class="result-secondary"><button class="text-button" id="edit-label" type="button">Edit numbers</button><button class="text-button danger" id="delete-label" type="button" hidden>Delete saved label</button></div></div>
+    <div id="result-actions" hidden><button class="button primary full-width" id="save-label" type="button">Save label locally</button><button class="button primary full-width" id="scan-next" type="button" hidden>${scanIcon} Scan next product</button><div class="result-secondary"><button class="text-button" id="change-amount" type="button" hidden>Change amount</button><button class="text-button" id="edit-label" type="button">Edit numbers</button><button class="text-button danger" id="delete-label" type="button" hidden>Delete saved label</button></div></div>
     <p class="sheet-disclaimer">No diagnosis, treatment advice, blood-glucose prediction or insulin dosing. Never change medication or your care plan based on this app.</p>
   </dialog>
   <dialog id="camera-dialog" aria-labelledby="camera-title">
@@ -93,6 +118,7 @@ document.querySelector('#app').innerHTML = `
   <dialog id="guide-dialog" aria-labelledby="guide-title">
     <div class="sheet-heading"><div><p class="eyebrow">CLARITY, WITH LIMITS</p><h2 id="guide-title">A little context</h2></div><button class="icon-button" id="close-guide" type="button" aria-label="Close information">&times;</button></div>
     <div class="guide-content">
+      <p id="language-help">Language follows your device region/time zone, then browser language. No GPS or location request. Change it anytime.</p>
       <h3>The score is sugar density. Nothing more.</h3><p>1/3 = lower, 2/3 = medium, 3/3 = higher total sugar per 100 g of food or 100 ml of drink. It is a simple UK label-guidance band, not a percentage, a Nutri-Score, a health rating or a clinical risk score.</p>
       <table><caption>Total sugar thresholds</caption><thead><tr><th>Band</th><th>Food / 100 g</th><th>Drink / 100 ml</th></tr></thead><tbody><tr><th>1 · Lower</th><td>&le; 5 g</td><td>&le; 2.5 g</td></tr><tr><th>2 · Medium</th><td>&gt; 5 to 22.5 g</td><td>&gt; 2.5 to 11.25 g</td></tr><tr><th>3 · Higher</th><td>&gt; 22.5 g</td><td>&gt; 11.25 g</td></tr></tbody></table>
       <p>Only the per-100 sugar thresholds are used. The full UK front-of-pack scheme also has portion criteria and other nutrients; this app does not reproduce that scheme.</p>
@@ -113,6 +139,10 @@ document.querySelector('#app').innerHTML = `
   <input type="file" id="import-file" accept=".json,application/json" hidden />
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 `;
+translateStatic(document.querySelector('#app'));
+document.documentElement.lang = getLanguage();
+document.title = `SugarLens — ${t('A little clarity')}`;
+document.querySelector('#language').value = getLanguage();
 
 const form = document.querySelector('#label-form');
 const productDialog = document.querySelector('#product-dialog');
@@ -142,7 +172,7 @@ function formSnapshot() {
 }
 
 function closeProduct() {
-  if (formSnapshot() !== cleanForm && !confirm('Discard this label\'s unsaved changes? Save it locally first if you want to keep it.')) return;
+  if (formSnapshot() !== cleanForm && !confirm(t('Discard this label\'s unsaved changes? Save it locally first if you want to keep it.'))) return;
   productDialog.close();
 }
 
@@ -157,14 +187,34 @@ function notify(message, error = false) {
   clearTimeout(toastTimer);
   const toast = document.querySelector('#toast');
   (guideDialog.open ? guideDialog : cameraDialog.open ? cameraDialog : productDialog.open ? productDialog : document.body).append(toast);
-  toast.textContent = message;
+  setText(toast, message);
   toast.classList.toggle('error', error);
   toast.hidden = false;
   toastTimer = setTimeout(() => { toast.hidden = true; }, error ? 12_000 : 6000);
 }
+if (languageReadError) notify(`Language preference could not be read: ${languageReadError.message}. Using the device default.`, true);
+document.querySelector('#language').addEventListener('change', (event) => {
+  setLanguage(event.target.value);
+  document.documentElement.lang = getLanguage();
+  document.title = `SugarLens — ${t('A little clarity')}`;
+  refreshTranslations();
+  updateBasis();
+  renderPreferences();
+  renderLibrary();
+  if (productDialog.open && current) {
+    if (!document.querySelector('#result').hidden) showResult();
+    else if (!document.querySelector('#quick-portion').hidden) {
+      const amount = document.querySelector('#quick-quantity').value;
+      showQuickPortion();
+      document.querySelector('#quick-quantity').value = amount;
+    } else showSource();
+  }
+  try { localStorage.setItem(LANGUAGE_KEY, getLanguage()); }
+  catch (error) { notify(`Language not saved: ${error.message}. Your choice applies for this visit only.`, true); }
+});
 
 const feedback = createFeedback(() => preferences, (message) => {
-  document.querySelector('#feedback-note').textContent = message;
+  setText(document.querySelector('#feedback-note'), message);
   document.querySelector('#feedback-note').hidden = false;
   notify(message, true);
 });
@@ -179,9 +229,9 @@ try {
   notify(`Preferences could not be read: ${error.message}. Default switches are active; changing one replaces the stored preferences.`, true);
 }
 function renderPreferences() {
-  document.querySelector('#lookup-privacy').textContent = preferences.online
+  setText(document.querySelector('#lookup-privacy'), preferences.online
     ? 'Online lookup sends the barcode to Open Food Facts. Camera images and your library stay on this device.'
-    : 'Local-only mode. Scans recall saved labels; new products need manual entry. No catalogue requests.';
+    : 'Local-only mode. Scans recall saved labels; new products need manual entry. No catalogue requests.');
   document.querySelector('#lookup-online').disabled = !preferences.online;
   for (const [key, id] of [['online', 'online-lookup'], ['sound', 'scan-sound'], ['vibration', 'scan-vibration']]) {
     document.querySelector(`#${id}`).checked = preferences[key];
@@ -201,7 +251,7 @@ for (const [key, id] of [['online', 'online-lookup'], ['sound', 'scan-sound'], [
 renderPreferences();
 if (!feedback.support.sound || !feedback.support.vibration) {
   const unavailable = [!feedback.support.sound && 'Sound', !feedback.support.vibration && 'Vibration'].filter(Boolean);
-  document.querySelector('#feedback-note').textContent = `${unavailable.join(' and ')} ${unavailable.length === 1 ? 'is' : 'are'} unavailable in this browser. Colors and text always work.`;
+  setText(document.querySelector('#feedback-note'), `${unavailable.join(' and ')} ${unavailable.length === 1 ? 'is' : 'are'} unavailable in this browser. Colors and text always work.`);
   document.querySelector('#feedback-note').hidden = false;
 }
 document.querySelector('#try-feedback').addEventListener('click', async () => { await feedback.unlock(); feedback.play(); });
@@ -211,7 +261,7 @@ document.querySelector('#dock-label').addEventListener('click', () => openProduc
 
 function showStorageError(error) {
   storageBlocked = true;
-  document.querySelector('#storage-message').textContent = `Local labels could not be read: ${error.message}. Saving is blocked to protect the original data. Export it, restore a valid backup, or explicitly reset it. Label checking still works.`;
+  setText(document.querySelector('#storage-message'), `Local labels could not be read: ${error.message}. Saving is blocked to protect the original data. Export it, restore a valid backup, or explicitly reset it. Label checking still works.`);
   document.querySelector('#storage-error').hidden = false;
 }
 
@@ -234,28 +284,31 @@ function renderLibrary() {
   document.body.classList.toggle('has-products', products.length > 0);
   document.querySelector('#saved-count').textContent = products.length;
   document.querySelector('#export').disabled = products.length === 0 || storageBlocked;
-  const query = document.querySelector('#search').value.trim().toLocaleLowerCase();
-  const visible = products.filter((item) => `${item.name} ${item.barcode}`.toLocaleLowerCase().includes(query)).sort((a, b) => a.name.localeCompare(b.name));
-  document.querySelector('#product-list').innerHTML = visible.length ? visible.map((item) => {
+  const query = document.querySelector('#search').value.trim().toLocaleLowerCase(getLanguage());
+  const visible = products.filter((item) => `${item.name} ${item.barcode}`.toLocaleLowerCase(getLanguage()).includes(query)).sort((a, b) => a.name.localeCompare(b.name, getLanguage()));
+  document.querySelector('#product-list').innerHTML = translatedMarkup(visible.length ? visible.map((item) => {
     const score = evaluateProduct(item);
-    return `<button class="product-card" type="button" data-product="${h(item.id)}" aria-label="Open saved label for ${h(item.name)}"><span class="product-symbol ${score.key}" aria-hidden="true">${item.type === 'drink' ? '&#9707;' : '&#9633;'}</span><span class="product-card-copy"><strong>${h(item.name)}</strong><span>${h(formatGrams(score.sugarPer100))} sugar / 100 ${score.unit}</span></span><span class="band-tag ${score.key}">${score.level}/3<span>${score.label}</span></span>${arrowIcon}</button>`;
-  }).join('') : `<div class="empty-state"><span class="empty-symbol" aria-hidden="true">${scanIcon}</span><h3>${products.length ? 'Nothing matches yet.' : 'Your labels live here.'}</h3><p>${products.length ? 'Try another name or barcode.' : 'Scan, find nutrition, and check the package.<br />Save the details just for you.'}</p></div>`;
+    return `<button class="product-card" type="button" data-product="${h(item.id)}" aria-label="Open saved label for ${h(item.name)}"><span class="product-symbol ${score.key}" aria-hidden="true">${item.type === 'drink' ? '&#9707;' : '&#9633;'}</span><span class="product-card-copy"><strong data-no-translate>${h(item.name)}</strong><span>${h(formatGrams(score.sugarPer100))} sugar / 100 ${score.unit}</span></span><span class="band-tag ${score.key}">${score.level}/3<span>${score.label}</span></span>${arrowIcon}</button>`;
+  }).join('') : `<div class="empty-state"><span class="empty-symbol" aria-hidden="true">${scanIcon}</span><h3>${products.length ? 'Nothing matches yet.' : 'Your labels live here.'}</h3><p>${products.length ? 'Try another name or barcode.' : 'Scan. Choose an amount.<br />The result saves automatically.'}</p></div>`);
 }
 
 function updateBasis() {
   const unit = THRESHOLDS[form.elements.type.value]?.unit || 'g/ml';
-  form.elements.basis.options[0].textContent = `Per 100 ${unit}`;
+  setText(form.elements.basis.options[0], `Per 100 ${unit}`);
   document.querySelector('#label-quantity-row').hidden = form.elements.basis.value !== 'serving';
   form.elements.quantity.required = form.elements.basis.value === 'serving';
-  document.querySelector('#quantity-label').textContent = `Labelled serving size (${unit})`;
-  document.querySelector('#portion-label').innerHTML = `Your portion (${unit}) <span>optional</span>`;
+  setText(document.querySelector('#quantity-label'), `Labelled serving size (${unit})`);
+  document.querySelector('#portion-label').innerHTML = translatedMarkup(`Your portion (${unit}) <span>optional</span>`);
 }
 
 function showForm() {
+  document.querySelector('#auto-save-status').hidden = true;
+  document.querySelector('#quick-portion').hidden = true;
+  document.querySelector('#scan-missing').hidden = true;
   form.hidden = false;
   document.querySelector('#result').hidden = true;
   document.querySelector('#result-actions').hidden = true;
-  document.querySelector('#product-title').textContent = 'Read a label';
+  setText(document.querySelector('#product-title'), 'Read a label');
   document.querySelector('#form-error').hidden = true;
 }
 
@@ -268,27 +321,28 @@ function fillForm(product) {
   form.elements.sugars.value = product.sugars;
   form.elements.carbs.value = product.carbs ?? '';
   form.elements.portion.value = product.portion ?? '';
-  document.querySelector('#barcode-caption').textContent = product.barcode ? 'captured' : 'optional';
+  setText(document.querySelector('#barcode-caption'), product.barcode ? 'captured' : 'optional');
   updateBasis();
 }
 
-function openProduct(product, barcode = '') {
+function openProduct(product, barcode = '', { focus = true } = {}) {
   cancelLookup();
+  quickScan = false;
   current = product;
   currentSaved = Boolean(product);
   form.reset();
   showForm();
   updateBasis();
   form.elements.barcode.value = barcode;
-  document.querySelector('#barcode-caption').textContent = barcode ? 'captured' : 'optional';
+  setText(document.querySelector('#barcode-caption'), barcode ? 'captured' : 'optional');
   form.querySelector('.barcode-details').open = Boolean(barcode);
   document.querySelector('#source-note').hidden = true;
-  document.querySelector('#entry-note').textContent = barcode ? 'New barcode. Check the current package label before scoring.' : 'Nutrition stays on this device. Copy the current package, not a guessed value.';
+  setText(document.querySelector('#entry-note'), barcode ? 'New barcode. Check the current package label before scoring.' : 'Nutrition stays on this device. Copy the current package, not a guessed value.');
   productDialog.showModal();
   if (product) {
     fillForm(product);
     showResult();
-  } else {
+  } else if (focus) {
     form.elements.name.focus();
   }
   cleanForm = formSnapshot();
@@ -298,21 +352,76 @@ function showSource() {
   const note = document.querySelector('#source-note');
   note.hidden = !current?.source;
   if (current?.source) {
-    note.innerHTML = `<a href="https://world.openfoodfacts.org/product/${catalogueCode(current.barcode)}" target="_blank" rel="noopener noreferrer">Open Food Facts &#8599;</a> &middot; retrieved ${h(current.source.retrievedAt)}. Community data, possibly edited locally. Check this package, food/drink type and units.`;
+    note.innerHTML = `<a href="https://world.openfoodfacts.org/product/${catalogueCode(current.barcode)}" target="_blank" rel="noopener noreferrer">Open Food Facts &#8599;</a> ${h(t('· retrieved {date}. {detail}', { date: current.source.retrievedAt, detail: quickScan ? 'Check the current package.' : 'Community data, possibly edited locally. Check this package, food/drink type and units.' }))}`;
+  }
+}
+
+function showMissing(reason, title = 'Product not found') {
+  document.querySelector('#auto-save-status').hidden = true;
+  form.hidden = true;
+  document.querySelector('#result').hidden = true;
+  document.querySelector('#result-actions').hidden = true;
+  document.querySelector('#quick-portion').hidden = true;
+  document.querySelector('#source-note').hidden = true;
+  document.querySelector('#scan-missing').hidden = false;
+  setText(document.querySelector('#product-title'), title);
+  setText(document.querySelector('#entry-note'), 'No usable nutrition to score. Nothing was added to your library.');
+  setText(document.querySelector('#missing-reason'), reason);
+  productDialog.scrollTop = 0;
+  document.querySelector('#product-title').focus({ preventScroll: true });
+}
+
+function showQuickPortion() {
+  document.querySelector('#auto-save-status').hidden = true;
+  form.hidden = true;
+  document.querySelector('#result').hidden = true;
+  document.querySelector('#result-actions').hidden = true;
+  document.querySelector('#scan-missing').hidden = true;
+  document.querySelector('#quick-portion').hidden = false;
+  document.querySelector('#quick-error').hidden = true;
+  document.querySelector('#product-title').textContent = current.name;
+  setText(document.querySelector('#entry-note'), 'Choose your amount. The score and local save happen automatically.');
+  const unit = THRESHOLDS[current.type].unit;
+  for (const button of document.querySelectorAll('[data-quick-type]')) button.setAttribute('aria-pressed', String(button.dataset.quickType === current.type));
+  setText(document.querySelector('#quick-quantity-label'), `Custom amount (${unit})`);
+  document.querySelector('#quick-amounts').innerHTML = (current.type === 'drink' ? [100, 250, 330] : [25, 50, 100])
+    .map((amount) => `<button class="button secondary" type="button" data-amount="${amount}">${amount} ${unit}</button>`).join('');
+  document.querySelector('#quick-quantity').value = '';
+  showSource();
+  productDialog.scrollTop = 0;
+  document.querySelector('#product-title').setAttribute('tabindex', '-1');
+  document.querySelector('#product-title').focus({ preventScroll: true });
+}
+
+function openScannedProduct(barcode) {
+  openProduct(undefined, barcode, { focus: false });
+  quickScan = true;
+  const saved = products.find((item) => item.barcode === barcode);
+  if (saved) {
+    current = saved;
+    currentSaved = true;
+    fillForm(saved);
+    cleanForm = formSnapshot();
+    showQuickPortion();
+  } else {
+    void findNutrition(barcode);
   }
 }
 
 async function findNutrition(barcode) {
   cancelLookup();
   if (!preferences.online || !navigator.onLine) {
-    document.querySelector('#entry-note').textContent = !preferences.online
+    const message = !preferences.online
       ? 'Local-only mode. Enter the nutrition from this package.'
       : 'You are offline. This barcode has no saved label; enter the package nutrition or look it up when online.';
+    if (quickScan) showMissing(message, 'Lookup unavailable');
+    else setText(document.querySelector('#entry-note'), message);
     return;
   }
   const controller = new AbortController();
   lookupController = controller;
   document.querySelector('#lookup-state').hidden = false;
+  setText(document.querySelector('#cancel-lookup'), quickScan ? 'Cancel lookup' : 'Cancel and enter manually');
   document.querySelector('#source-note').hidden = true;
   form.hidden = true;
   try {
@@ -321,34 +430,45 @@ async function findNutrition(barcode) {
     current = product;
     currentSaved = false;
     fillForm(product);
-    form.elements.type.value = '';
-    updateBasis();
-    showSource();
-    document.querySelector('#entry-note').textContent = `Nutrition found. The catalogue suggests ${product.type === 'drink' ? 'a drink' : 'food'}, but categories can be wrong. Choose food or drink and check the per-100 values against this package before scoring. Your portion is never guessed.`;
+    if (quickScan) {
+      cleanForm = formSnapshot();
+      showQuickPortion();
+    } else {
+      form.elements.type.value = '';
+      updateBasis();
+      showSource();
+      setText(document.querySelector('#entry-note'), `Nutrition found. The catalogue suggests ${product.type === 'drink' ? 'a drink' : 'food'}, but categories can be wrong. Choose food or drink and check the per-100 values against this package before scoring. Your portion is never guessed.`);
+    }
   } catch (error) {
     if (controller.signal.aborted || lookupController !== controller) return;
     const message = error.name === 'TimeoutError' ? 'Online lookup timed out.' : `Online lookup failed: ${error.message}`;
-    document.querySelector('#entry-note').textContent = `${message} Enter the package label manually; no score was guessed.`;
-    notify(`${message} Manual entry is still available.`, true);
+    if (quickScan) showMissing(message, error.name === 'ProductNotFoundError' ? 'Product not found' : 'Lookup unavailable');
+    else {
+      setText(document.querySelector('#entry-note'), `${message} Enter the package label manually; no score was guessed.`);
+      notify(`${message} Manual entry is still available.`, true);
+    }
   } finally {
     if (lookupController === controller) {
       lookupController = undefined;
       document.querySelector('#lookup-state').hidden = true;
-      form.hidden = false;
-      if (current?.source) form.elements.type.focus();
+      if (!quickScan) {
+        form.hidden = false;
+        if (current?.source) form.elements.type.focus();
+      }
     }
   }
 }
 document.querySelector('#cancel-lookup').addEventListener('click', () => {
   cancelLookup();
+  if (quickScan) { showMissing('Online lookup cancelled. Scan again when ready.', 'Lookup cancelled'); return; }
   form.hidden = false;
-  document.querySelector('#entry-note').textContent = 'Online lookup cancelled. Copy the nutrition from this package.';
+  setText(document.querySelector('#entry-note'), 'Online lookup cancelled. Copy the nutrition from this package.');
   form.elements.name.focus();
 });
 document.querySelector('#lookup-online').addEventListener('click', async () => {
   try {
     const barcode = normalizeBarcode(form.elements.barcode.value);
-    if (formSnapshot() !== cleanForm && (form.elements.name.value || form.elements.sugars.value) && !confirm('Replace these unsaved values with online nutrition? Check the package after lookup.')) return;
+    if (formSnapshot() !== cleanForm && (form.elements.name.value || form.elements.sugars.value) && !confirm(t('Replace these unsaved values with online nutrition? Check the package after lookup.'))) return;
     await feedback.unlock();
     current = undefined;
     currentSaved = false;
@@ -362,26 +482,35 @@ document.querySelector('#lookup-online').addEventListener('click', async () => {
 });
 
 function showResult() {
+  document.querySelector('#quick-portion').hidden = true;
+  document.querySelector('#scan-missing').hidden = true;
   const score = evaluateProduct(current);
   const thresholds = THRESHOLDS[current.type];
   const result = document.querySelector('#result');
   const hasPortion = current.portion !== null;
   document.querySelector('#product-title').textContent = current.name;
-  document.querySelector('#entry-note').textContent = currentSaved ? `Saved label entered ${current.enteredAt}. Recipes and labels can change; recheck this package.` : 'Based only on the label values you entered. Check the package before relying on the numbers.';
-  if (current.source && !currentSaved) document.querySelector('#entry-note').textContent = 'Based on imported catalogue values and your edits. This is not verified nutrition or medical advice.';
+  setText(document.querySelector('#entry-note'), currentSaved ? `Saved label entered ${current.enteredAt}. Recipes and labels can change; recheck this package.` : 'Based only on the label values you entered. Check the package before relying on the numbers.');
+  if (current.source && !currentSaved) setText(document.querySelector('#entry-note'), 'Based on imported catalogue values and your edits. This is not verified nutrition or medical advice.');
   showSource();
-  result.innerHTML = `
+  result.innerHTML = translatedMarkup(`
     <div class="score-card ${score.key}"><span class="eyebrow">SUGAR LEVEL, NOT DIABETES RISK</span><div class="score-main"><div><strong>${score.label}</strong><p>Total sugar per 100 ${score.unit}</p></div><span class="score-number">${score.level}<small>/ 3</small></span></div><div class="score-segments" aria-hidden="true">${['lower', 'medium', 'higher'].map((key, index) => `<span class="${key} ${index + 1 === score.level ? 'selected' : ''}"></span>`).join('')}</div><div class="score-legend"><span>1 Lower</span><span>2 Medium</span><span>3 Higher</span></div><p class="score-explanation">Green / amber / red = sugar density only. Green does not mean diabetes-safe.</p></div>
     <div class="nutrient-grid"><div><span>Sugars / 100 ${score.unit}</span><strong>${h(formatGrams(score.sugarPer100))}</strong></div><div><span>Total carbs / 100 ${score.unit}</span><strong>${h(formatGrams(score.carbsPer100))}</strong></div></div>
-    <div class="portion-card"><div class="section-heading"><h3>Your portion</h3><span>${hasPortion ? `${h(current.portion)} ${score.unit}` : 'Not entered'}</span></div>${hasPortion ? `<div class="portion-values"><span>Sugars <strong>${h(formatGrams(score.sugarPerPortion))}</strong></span><span>Total carbs <strong>${h(formatGrams(score.carbsPerPortion))}</strong></span></div>` : '<p>No portion was entered, so per-portion amounts are unknown. Edit the numbers to add one.</p>'}<p class="field-help">Arithmetic only. This is not a recommended portion or an insulin-dosing calculation.</p></div>
+    <div class="portion-card"><div class="section-heading"><h3>Your portion</h3><span>${hasPortion ? `${h(formatNumber(current.portion))} ${score.unit}` : 'Not entered'}</span></div>${hasPortion ? `<div class="portion-values"><span>Sugars <strong>${h(formatGrams(score.sugarPerPortion))}</strong></span><span>Total carbs <strong>${h(formatGrams(score.carbsPerPortion))}</strong></span></div>` : '<p>No portion was entered, so per-portion amounts are unknown. Edit the numbers to add one.</p>'}<p class="field-help">Arithmetic only. This is not a recommended portion or an insulin-dosing calculation.</p></div>
     <div class="result-caution"><strong>Lower sugar does not mean diabetes-safe.</strong><p>${current.carbs === null ? 'Total carbohydrate was not entered. Sugar alone is not enough to understand carbohydrate amounts. Add total carbs from the label for more context.' : 'Total carbohydrate includes more than sugar. Even a lower-sugar product can contain substantial carbohydrate. These figures do not predict your blood-glucose response.'}</p></div>
     <details class="score-details"><summary>Why this band?</summary><p>${current.type === 'food' ? 'Food' : 'Drink'} thresholds per 100 ${score.unit}: lower &le; ${thresholds.low} g, medium &gt; ${thresholds.low} to ${thresholds.high} g, higher &gt; ${thresholds.high} g.</p><p>Entered label: ${h(formatGrams(current.sugars))} total sugars ${current.basis === 'hundred' ? `per 100 ${score.unit}` : `per ${h(current.quantity)} ${score.unit} serving, converted to per 100 ${score.unit}`}. Rounded display values do not change the band.</p><p>This uses UK sugar-density criteria, not the full front-of-pack scheme or a personalised diabetes assessment.</p><button class="text-button" type="button" id="result-guide">Read the sources and limitations</button></details>
-  `;
+  `);
   form.hidden = true;
   result.hidden = false;
   document.querySelector('#result-actions').hidden = false;
   document.querySelector('#save-label').disabled = storageBlocked || currentSaved;
-  document.querySelector('#save-label').textContent = storageBlocked ? 'Storage unavailable - checking only' : currentSaved ? 'Saved on this device' : 'Save label locally';
+  document.querySelector('#save-label').hidden = quickScan && currentSaved;
+  setText(document.querySelector('#save-label'), storageBlocked ? 'Storage unavailable - checking only' : currentSaved ? 'Saved on this device' : quickScan ? 'Retry local save' : 'Save label locally');
+  document.querySelector('#scan-next').hidden = !quickScan;
+  document.querySelector('#change-amount').hidden = !quickScan;
+  const savedStatus = document.querySelector('#auto-save-status');
+  savedStatus.hidden = !quickScan;
+  setText(savedStatus, currentSaved ? 'Saved automatically on this device.' : 'Not saved. Local storage is unavailable; your result is still shown.');
+  savedStatus.classList.toggle('save-failed', !currentSaved);
   document.querySelector('#delete-label').hidden = !currentSaved;
   document.querySelector('#result-guide').addEventListener('click', () => guideDialog.showModal());
   productDialog.scrollTop = 0;
@@ -418,7 +547,7 @@ form.addEventListener('submit', async (event) => {
     if (current === scored && productDialog.open) feedback.play(evaluateProduct(scored).level);
   } catch (error) {
     const message = document.querySelector('#form-error');
-    message.textContent = error.message;
+    setText(message, error.message);
     message.hidden = false;
     message.scrollIntoView({ block: 'nearest' });
   }
@@ -433,14 +562,15 @@ productDialog.addEventListener('cancel', (event) => {
   closeProduct();
 });
 document.querySelector('#edit-label').addEventListener('click', () => {
+  quickScan = false;
   fillForm(current);
   if (currentSaved) cleanForm = formSnapshot();
   showForm();
-  document.querySelector('#entry-note').textContent = 'Check the current package and keep both nutrient values on the same label basis.';
+  setText(document.querySelector('#entry-note'), 'Check the current package and keep both nutrient values on the same label basis.');
   form.elements.sugars.focus();
 });
-document.querySelector('#save-label').addEventListener('click', () => {
-  if (!current || storageBlocked) return;
+function saveCurrentLabel() {
+  if (!current || storageBlocked) return false;
   try {
     const next = upsertProduct(products, current);
     if (persist(next)) {
@@ -449,15 +579,61 @@ document.querySelector('#save-label').addEventListener('click', () => {
       cleanForm = formSnapshot();
       document.querySelector('#search').value = '';
       renderLibrary();
-      showResult();
-      notify('Saved on this device. Recheck the package next time: recipes can change.');
+      return true;
     }
   } catch (error) { notify(error.message, true); }
+  return false;
+}
+document.querySelector('#save-label').addEventListener('click', () => {
+  if (saveCurrentLabel()) {
+    showResult();
+    notify('Saved on this device. Recheck the package next time: recipes can change.');
+  }
 });
+async function scoreQuickAmount(value) {
+  const ready = feedback.unlock();
+  try {
+    current = validateProduct({ ...current, portion: parseNumber(value, 'your amount', { positive: true, max: 5000 }) });
+    currentSaved = false;
+    fillForm(current);
+    saveCurrentLabel();
+    showResult();
+    const scored = current;
+    await ready;
+    if (current === scored && productDialog.open) feedback.play(evaluateProduct(scored).level);
+  } catch (error) {
+    setText(document.querySelector('#quick-error'), error.message);
+    document.querySelector('#quick-error').hidden = false;
+  }
+}
+document.querySelector('#quick-amounts').addEventListener('click', (event) => {
+  const button = event.target.closest('[data-amount]');
+  if (button) void scoreQuickAmount(button.dataset.amount);
+});
+document.querySelector('#quick-form').addEventListener('submit', (event) => {
+  event.preventDefault();
+  void scoreQuickAmount(document.querySelector('#quick-quantity').value);
+});
+document.querySelector('.quick-types').addEventListener('click', (event) => {
+  const button = event.target.closest('[data-quick-type]');
+  if (!button) return;
+  current = { ...current, type: button.dataset.quickType };
+  fillForm(current);
+  showQuickPortion();
+});
+document.querySelector('#change-amount').addEventListener('click', showQuickPortion);
+function scanNext() {
+  closeProduct();
+  if (!productDialog.open) document.querySelector('#scan-product').click();
+}
+document.querySelector('#scan-next').addEventListener('click', scanNext);
+document.querySelector('#missing-scan').addEventListener('click', scanNext);
+document.querySelector('#missing-manual').addEventListener('click', () => openProduct(undefined, form.elements.barcode.value));
 document.querySelector('#delete-label').addEventListener('click', () => {
   if (!current || storageBlocked) return;
-  if (confirm(`Delete the saved label for "${current.name}" from this browser?`) && persist(products.filter((item) => item.id !== current.id))) {
+  if (confirm(t(`Delete the saved label for "${current.name}" from this browser?`)) && persist(products.filter((item) => item.id !== current.id))) {
     currentSaved = false;
+    quickScan = false;
     showResult();
     notify('Local label deleted.');
   }
@@ -475,7 +651,7 @@ document.querySelector('#recall').addEventListener('click', () => {
       notify('No local label for this code. Enter the nutrition from the package.');
       return;
     }
-    if ((form.elements.sugars.value || form.elements.name.value) && !confirm('Replace the current form with this saved label? Recheck the package before using its values.')) return;
+    if ((form.elements.sugars.value || form.elements.name.value) && !confirm(t('Replace the current form with this saved label? Recheck the package before using its values.'))) return;
     current = product;
     currentSaved = true;
     fillForm(product);
@@ -511,7 +687,7 @@ document.querySelector('#import-file').addEventListener('change', async (event) 
   try {
     if (file.size > 2_000_000) throw new Error('Backup must be smaller than 2 MB.');
     const next = validateBackup(JSON.parse(await file.text()));
-    if (!confirm(`Replace your local library with ${next.length} labels from this backup? Imported values must be checked against current packages.`)) return;
+    if (!confirm(t(`Replace your local library with ${next.length} labels from this backup? Imported values must be checked against current packages.`))) return;
     saveProducts(next);
     products = next;
     storageBlocked = false;
@@ -522,7 +698,7 @@ document.querySelector('#import-file').addEventListener('change', async (event) 
   } catch (error) { notify(`Import failed: ${error.message}. Existing data is unchanged.`, true); }
 });
 document.querySelector('#reset-storage').addEventListener('click', () => {
-  if (!confirm('Permanently replace the unreadable SugarLens data with an empty library? Export the original first if you need it.')) return;
+  if (!confirm(t('Permanently replace the unreadable SugarLens data with an empty library? Export the original first if you need it.'))) return;
   try {
     saveProducts([]);
     products = [];
@@ -544,13 +720,13 @@ document.querySelector('#scan-product').addEventListener('click', async () => {
   void feedback.unlock();
   cameraDialog.showModal();
   const status = document.querySelector('#camera-status');
-  status.textContent = 'Starting the camera...';
+  setText(status, 'Starting the camera...');
   const token = ++session;
   const sessionVideo = video.cloneNode();
   video.replaceWith(sessionVideo);
   video = sessionVideo;
   if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
-    status.textContent = 'Camera scanning needs HTTPS or localhost and browser support. Use manual entry instead.';
+    setText(status, 'Camera scanning needs HTTPS or localhost and browser support. Use manual entry instead.');
     return;
   }
   try {
@@ -569,14 +745,12 @@ document.querySelector('#scan-product').addEventListener('click', async () => {
           scanControls.stop();
           closeCamera();
           feedback.play();
-          const saved = products.find((item) => item.barcode === barcode);
-          openProduct(saved, barcode);
-          if (!saved) void findNutrition(barcode);
+          openScannedProduct(barcode);
         } catch (parseError) {
-          status.textContent = parseError.message;
+          setText(status, parseError.message);
         }
       } else if (error && !['NotFoundException', 'ChecksumException', 'FormatException'].includes(error.name)) {
-        status.textContent = `Scan failed: ${error.message}. Try a clearer angle or manual entry.`;
+        setText(status, `Scan failed: ${error.message}. Try a clearer angle or manual entry.`);
       }
     });
     if (token !== session) {
@@ -585,11 +759,11 @@ document.querySelector('#scan-product').addEventListener('click', async () => {
       return;
     }
     controls = started;
-    status.textContent = 'Camera ready. Hold the barcode steady.';
+    setText(status, 'Camera ready. Hold the barcode steady.');
   } catch (error) {
     if (token === session) {
       stopCamera();
-      status.textContent = cameraError(error);
+      setText(status, cameraError(error));
     }
   }
 });
@@ -604,15 +778,16 @@ document.addEventListener('visibilitychange', () => {
   if (cameraDialog.open) closeCamera();
   if (lookupController) {
     cancelLookup();
-    form.hidden = false;
-    document.querySelector('#entry-note').textContent = 'Lookup paused while the app was in the background. Look up this barcode again or enter the package label.';
+    const message = 'Lookup paused while the app was in the background. Look up this barcode again or enter the package label.';
+    if (quickScan) showMissing(message, 'Lookup paused');
+    else { form.hidden = false; setText(document.querySelector('#entry-note'), message); }
   }
 });
 
 for (const id of ['open-guide', 'footer-guide', 'install-help']) document.querySelector(`#${id}`).addEventListener('click', () => guideDialog.showModal());
 document.querySelector('#close-guide').addEventListener('click', () => guideDialog.close());
 document.querySelector('#update').addEventListener('click', () => {
-  if (productDialog.open && !confirm('Reload to update the app? Unsaved label changes will be lost.')) return;
+  if (productDialog.open && !confirm(t('Reload to update the app? Unsaved label changes will be lost.'))) return;
   activateUpdate?.();
 });
 let updating = false;
@@ -635,10 +810,10 @@ document.querySelector('#install').addEventListener('click', async () => {
 });
 registerOffline({
   onReady: () => {
-    document.querySelector('#offline-status').textContent = 'Ready offline. Labels stay on this device.';
+    setText(document.querySelector('#offline-status'), 'Ready offline. Labels stay on this device.');
     document.querySelector('.status-dot').classList.add('ready');
   },
-  onError: (message) => { document.querySelector('#offline-status').textContent = message; },
+  onError: (message) => { setText(document.querySelector('#offline-status'), message); },
   onUpdate: (activate) => {
     activateUpdate = () => { updating = true; closeCamera(); activate(); };
     document.querySelector('#update').hidden = false;

@@ -26,7 +26,7 @@ test('catalogue values retain precision, missing carbs stay unknown and attribut
 
 test('mismatched, missing, estimated-only and impossible catalogue nutrition never produces a score', () => {
   assert.throws(() => catalogueProduct(entry({ code: '3017620422003' }), barcode), /different barcode/);
-  assert.throws(() => catalogueProduct({ result: { id: 'product_not_found' } }, barcode), /not in Open Food Facts/);
+  assert.throws(() => catalogueProduct({ result: { id: 'product_not_found' } }, barcode), { name: 'ProductNotFoundError' });
   for (const nutrients of [
     { 'added-sugars_100g': 5 }, { sugars_100g: null }, { sugars_100g: '5' },
     { sugars_100g: -1 }, { sugars_100g: 101 }, { sugars_100g: 20, carbohydrates_100g: 5 },
@@ -53,6 +53,7 @@ test('HTTP failures, malformed responses, timeout and cancellation remain explic
   for (const [status, message] of [[404, /not in/], [429, /rate-limiting/], [503, /unavailable/]]) {
     await assert.rejects(lookupNutrition(barcode, { fetcher: async () => new Response('', { status }) }), message);
   }
+  await assert.rejects(lookupNutrition(barcode, { fetcher: async () => new Response('', { status: 503 }) }), { name: 'Error' });
   await assert.rejects(lookupNutrition(barcode, { fetcher: async () => new Response('{broken') }), SyntaxError);
   const waiting = async (_url, { signal }) => new Promise((_resolve, reject) => {
     signal.addEventListener('abort', () => reject(signal.reason), { once: true });

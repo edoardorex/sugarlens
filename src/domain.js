@@ -129,11 +129,11 @@ export function upsertProduct(products, value) {
   return validateBackup({ version: 1, products: next });
 }
 
-export function formatGrams(value) {
+export function formatGrams(value, locale) {
   if (value === null) return 'Not entered';
   const rounded = Math.round((value + Number.EPSILON) * 100) / 100;
-  const formatted = new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(rounded);
-  return value > 0 && rounded === 0 ? '<0.01 g' : `${formatted} g`;
+  const formatter = new Intl.NumberFormat(locale, { maximumFractionDigits: 2 });
+  return value > 0 && rounded === 0 ? `<${formatter.format(.01)} g` : `${formatter.format(rounded)} g`;
 }
 
 export function escapeHTML(value) {

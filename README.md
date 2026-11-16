@@ -8,8 +8,9 @@ A minimal, phone-first food-label helper. Scan supermarket products, understand
 their sugar density, and keep your label library entirely on your device.
 
 [Open SugarLens](https://edoardorex.github.io/sugarlens/) ·
-[How it works](#scan-read-understand) ·
+[How it works](#scan-choose-see) ·
 [Mobile previews](#optimized-for-mobile) ·
+[Languages](#languages--regional-default) ·
 [Medical limitations](#important-medical-limitations) ·
 [Online lookup & privacy](#local-library-optional-online-lookup)
 
@@ -26,24 +27,36 @@ their sugar density, and keep your label library entirely on your device.
 > Do not use SugarLens for diagnosis, glucose prediction, insulin dosing,
 > treating a hypo, emergencies, or changing medication or your care plan.
 
-## Scan. Read. Understand.
+## Scan. Choose. See.
 
-1. **Scan the package barcode** with your phone camera, or enter a label manually.
-2. **Find nutrition automatically on Open Food Facts.** New barcodes trigger an
-   online lookup when enabled. Choose food or drink and review the retrieved
-   per-100 values against the actual package. Missing or invalid data? Enter
-   the label manually instead.
-3. **See a green, amber or red sugar-density score**, plus total carbohydrate and
-   your optional portion amounts. Gentle sound and vibration confirm scans and
-   scores. Save the label locally for next time.
+1. **Scan the package barcode.** Saved barcodes work locally; new ones are looked
+   up automatically on Open Food Facts when online lookup is enabled.
+2. **Tap your amount.** The compact screen offers example gram/millilitre amounts
+   and a custom entry. Check the displayed food/drink type against the package;
+   correct it with one tap if the catalogue guessed wrong.
+3. **See the colored result immediately.** Sugar density, total carbohydrate and
+   your amount's arithmetic appear together. The label and chosen amount are
+   **saved automatically on your device**—no separate score or save button.
 
 Future scans recall your own saved entry. Recipes and nutrition labels can change:
 **always recheck the current package**, especially when recalling or importing data.
+Choosing another amount updates the same record, without duplicates.
+
+No usable catalogue entry? **Product not found** appears, with no guessed score
+or automatic blank form. Rescan, or explicitly choose manual entry. Network
+failures, offline mode and provider limits instead show **Lookup unavailable**.
+A failed local save is clearly marked **Not saved**; the result remains visible
+and you can retry. Manual labels and edits keep their explicit save action.
+
+Quantity buttons are **examples, not recommended servings**. Choosing an amount
+changes portion arithmetic, not the per-100 sugar-density band. This is never a
+personalised diabetes risk or safety score.
 
 | Small, useful, private | What it does |
 | --- | --- |
 | **On-device camera scanning** | EAN-13, EAN-8, UPC-A, and supported GTIN-bearing GS1 Data Matrix / Code 128 |
-| **Automatic nutrition lookup** | Open Food Facts values, product attribution and retrieval date; review before scoring |
+| **Scan → amount → result** | Automatic lookup and local saving; no extra score/save clicks |
+| **Automatic nutrition lookup** | Open Food Facts values, product attribution and retrieval date; check the current package |
 | **A transparent color score** | Green / amber / red, with numbers and text, separate food and drink thresholds |
 | **A little sensory feedback** | Gentle scan confirmation and one/two/three score pulses; independent sound and vibration switches |
 | **Carbohydrate context** | Total carbohydrate is separate from sugar and never guessed when missing |
@@ -52,8 +65,9 @@ Future scans recall your own saved entry. Recipes and nutrition labels can chang
 | **Private label library** | Local browser storage, search, editing, JSON export and restore |
 | **Installable and offline** | Home-screen support; app and scanner assets cached after the first online visit |
 | **Comfortable on small screens** | Reachable scan/add bar, full-width sheets, large inputs, and 320px layouts |
+| **Four languages** | English, Italian, Spanish and French; regional default and remembered manual switch |
 
-English interface, local number formatting, decimal dot or comma entry.
+Localized interface, dates and number formatting; decimal dot or comma entry.
 No account, API key, subscription, analytics, external fonts, or backend.
 Online catalogue lookup is optional; your saved label library stays local.
 
@@ -71,9 +85,10 @@ without hiding the medical limitations.
 
 **Online lookup**, **Sound** and **Vibration** switches are within reach on the
 home screen and remembered on this device. New scans find nutrition online;
-saved barcodes recall your own label without a request. You can cancel a slow
-lookup and enter the package values immediately. Confirm food or drink yourself:
-catalogue categories and serving conventions are not always reliable.
+saved barcodes recall your own label without a request. A successful scan opens
+quantity choices instead of the full nutrition form. Cancelled or missing
+lookups leave rescan and explicit manual entry available. The food/drink toggle
+stays visible: catalogue categories and serving conventions are not always reliable.
 
 Sound is unlocked by a tap, not played on page load. Scans give a gentle
 confirmation; scores give one, two or three short pulses matching the band
@@ -84,14 +99,31 @@ feedback. Color, score numbers and text always remain available.
 
 <p align="center">
   <a href="docs/screenshots/phone-library.png"><img src="docs/screenshots/phone-library.png" width="300" alt="SugarLens in a smartphone frame, showing medical limitations, saved product labels, sugar-density bands, and bottom scan actions" /></a>
+  <a href="docs/screenshots/phone-choose-amount.png"><img src="docs/screenshots/phone-choose-amount.png" width="300" alt="SugarLens after a scan, with one-tap quantity choices, a correctable food or drink type, and automatic local saving" /></a>
   <a href="docs/screenshots/phone-sugar-result.png"><img src="docs/screenshots/phone-sugar-result.png" width="300" alt="SugarLens's phone-sized result showing sugar density, total carbohydrate, portion arithmetic, and a warning that lower sugar is not diabetes-safe" /></a>
 </p>
 
-*Your label library and a color sugar-density result. Phone-sized app screenshots
+*Your label library, the quick amount picker and a color sugar-density result. Phone-sized app screenshots
 in a generic smartphone frame; illustrative labels and catalogue response, not
 product recommendations.*
 
-Tap either preview to open the full-size image.
+Tap any preview to open the full-size image.
+
+## Languages & regional default
+
+**English · Italiano · Español · Français**
+
+The visible header selector changes the interface immediately, including
+accessible labels, errors, the medical guide, dates and decimal formatting.
+Your choice is remembered on this device and works offline; switching languages
+does not erase labels, change nutrition values or translate your product names.
+The README stays in English.
+
+Without a saved language choice, supported regional time zones suggest the default language.
+Otherwise, the first supported browser language is used, then English.
+**No GPS, geolocation permission, IP-location service or location upload.**
+The device's time zone only approximates a region; it does not determine your
+actual location or preferred language. Override it anytime with the selector.
 
 ## What the score actually means
 
@@ -169,9 +201,11 @@ Only reported **total sugars and total carbohydrate per 100 g/ml** are used;
 estimated, added-sugar and prepared-only values are not substituted. Missing
 carbohydrate remains unknown; missing sugar, invalid nutrition, a mismatched
 barcode, missing products, API limits, network failures and a 10-second timeout
-all leave manual entry available with a visible explanation. Your portion is
-never inferred. Catalogue categories only suggest food/drink; you must select
-the correct type before scoring.
+all leave manual entry available with a visible explanation. Missing/unusable
+entries do not automatically open the full form. Your portion is never inferred.
+Catalogue categories suggest food/drink in the quick picker; check and correct
+the visible type against the package before choosing an amount. Explicit online
+lookup from the manual form still asks you to confirm the type and save yourself.
 
 The app limits lookup attempts to 15 per minute per tab. Provider/IP-wide limits
 may still apply. No automatic retries or bulk requests are made.
@@ -273,6 +307,7 @@ src/
   storage.js          Private local label library
   lookup.js           Validated Open Food Facts lookup, cancellation and timeout
   feedback.js         Tap-unlocked sound and optional vibration
+  i18n.js             Offline translations, regional default and language switching
   scanner.js          On-device decoding
   offline.js          Install and update lifecycle
   service-worker.js   Build-time precache template

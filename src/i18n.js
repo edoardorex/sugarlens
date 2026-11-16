@@ -1,0 +1,387 @@
+export const LANGUAGES = { en: 'English', it: 'Italiano', es: 'Español', fr: 'Français' };
+export const LANGUAGE_KEY = 'sugarlens.language.v1';
+let language = 'en';
+const bindings = new Map();
+
+// English text is the message ID. Placeholders keep user data out of translation.
+export const messages = {
+  'Language': ['Lingua', 'Idioma', 'Langue'],
+  'Skip to saved labels': ['Vai alle etichette salvate', 'Ir a las etiquetas guardadas', 'Aller aux étiquettes enregistrées'],
+  'SugarLens home': ['Home SugarLens', 'Inicio de SugarLens', 'Accueil SugarLens'],
+  'About, privacy and medical limitations': ['Informazioni, privacy e limiti medici', 'Información, privacidad y límites médicos', 'Informations, confidentialité et limites médicales'],
+  'PRIVATE LABEL HELP. NOT MEDICAL ADVICE.': ['AIUTO PRIVATO. NON È UN CONSIGLIO MEDICO.', 'AYUDA PRIVADA. NO ES CONSEJO MÉDICO.', 'AIDE PRIVÉE. PAS UN AVIS MÉDICAL.'],
+  'A little clarity': ['Un po’ di chiarezza', 'Un poco de claridad', 'Un peu de clarté'],
+  'in your': ['nel tuo', 'en tu', 'dans votre'],
+  'basket.': ['carrello.', 'cesta.', 'panier.'],
+  'Scan. Choose your amount.': ['Scansiona. Scegli la quantità.', 'Escanea. Elige la cantidad.', 'Scannez. Choisissez la quantité.'],
+  'See the sugar. Saved automatically.': ['Vedi gli zuccheri. Salvato in automatico.', 'Ve el azúcar. Se guarda automáticamente.', 'Voyez les sucres. Enregistrement automatique.'],
+  'Scan a product': ['Scansiona un prodotto', 'Escanear un producto', 'Scanner un produit'],
+  'Enter a label manually': ['Inserisci un’etichetta a mano', 'Introducir una etiqueta a mano', 'Saisir une étiquette'],
+  'Scan preferences': ['Preferenze scansione', 'Preferencias del escaneo', 'Préférences du scan'],
+  'Online lookup': ['Ricerca online', 'Búsqueda online', 'Recherche en ligne'],
+  'Sound': ['Suono', 'Sonido', 'Son'],
+  'Vibration': ['Vibrazione', 'Vibración', 'Vibration'],
+  'Online lookup sends the barcode to Open Food Facts. Camera images and your library stay on this device.': ['La ricerca invia il codice a Open Food Facts. Immagini e libreria restano su questo dispositivo.', 'La búsqueda envía el código a Open Food Facts. Las imágenes y tu biblioteca permanecen en este dispositivo.', 'La recherche envoie le code à Open Food Facts. Les images et votre bibliothèque restent sur cet appareil.'],
+  'Preparing offline mode...': ['Preparazione modalità offline…', 'Preparando el modo sin conexión…', 'Préparation du mode hors ligne…'],
+  'Add to home screen': ['Aggiungi alla schermata Home', 'Añadir a la pantalla de inicio', 'Ajouter à l’écran d’accueil'],
+  'How to install': ['Come installare', 'Cómo instalar', 'Comment installer'],
+  'Update available': ['Aggiornamento disponibile', 'Actualización disponible', 'Mise à jour disponible'],
+  'Medical limitation': ['Limite medico', 'Limitación médica', 'Limite médicale'],
+  'A label helper. Not a diabetes safety rating.': ['Un aiuto per le etichette. Non un giudizio di sicurezza per il diabete.', 'Una ayuda con las etiquetas. No una valoración de seguridad para la diabetes.', 'Une aide pour lire les étiquettes. Pas une évaluation de sécurité pour le diabète.'],
+  'Lower sugar does not mean diabetes-safe. Total carbohydrate, portions and your individual care plan matter. Educational use only.': ['Meno zuccheri non significa sicuro per il diabete. Contano carboidrati totali, porzioni e piano di cura personale. Solo uso educativo.', 'Menos azúcar no significa seguro para la diabetes. Importan los hidratos de carbono totales, las porciones y tu plan de atención. Solo uso educativo.', 'Moins de sucre ne signifie pas sans risque pour le diabète. Les glucides totaux, les portions et votre plan de soins comptent. Usage éducatif uniquement.'],
+  'Export original data': ['Esporta i dati originali', 'Exportar los datos originales', 'Exporter les données originales'],
+  'Reset local labels': ['Reimposta le etichette locali', 'Restablecer las etiquetas locales', 'Réinitialiser les étiquettes locales'],
+  'YOUR PRIVATE LITTLE LIBRARY': ['LA TUA PICCOLA LIBRERIA PRIVATA', 'TU PEQUEÑA BIBLIOTECA PRIVADA', 'VOTRE PETITE BIBLIOTHÈQUE PRIVÉE'],
+  'Saved labels': ['Etichette salvate', 'Etiquetas guardadas', 'Étiquettes enregistrées'],
+  'Export': ['Esporta', 'Exportar', 'Exporter'],
+  'Import': ['Importa', 'Importar', 'Importer'],
+  'Search saved products': ['Cerca prodotti salvati', 'Buscar productos guardados', 'Rechercher les produits enregistrés'],
+  'Find a saved product...': ['Cerca un prodotto salvato…', 'Busca un producto guardado…', 'Rechercher un produit enregistré…'],
+  'Scan to recall a saved label or find nutrition on Open Food Facts. Missing entry? Copy the package. Always recheck its current label.': ['Scansiona per richiamare un’etichetta o cercarla su Open Food Facts. Se manca, puoi inserirla a mano. Ricontrolla sempre la confezione attuale.', 'Escanea para recuperar una etiqueta o buscarla en Open Food Facts. Si falta, puedes introducirla a mano. Comprueba siempre el envase actual.', 'Scannez pour retrouver une étiquette ou la rechercher sur Open Food Facts. Sinon, vous pouvez la saisir. Vérifiez toujours l’emballage actuel.'],
+  'No photo uploads. No accounts. Optional online barcode lookup.': ['Nessun invio di foto. Nessun account. Ricerca online facoltativa.', 'Sin subir fotos. Sin cuentas. Búsqueda online opcional.', 'Aucun envoi de photos. Aucun compte. Recherche en ligne facultative.'],
+  'How the score works': ['Come funziona il punteggio', 'Cómo funciona la puntuación', 'Comment fonctionne le score'],
+  'Mobile product actions': ['Azioni prodotto per telefono', 'Acciones del producto en el móvil', 'Actions produit sur mobile'],
+  'Scan product': ['Scansiona', 'Escanear', 'Scanner'],
+  '+ New label': ['+ Etichetta', '+ Etiqueta', '+ Étiquette'],
+  'LET THE LABEL DO THE TALKING': ['LASCIAMO PARLARE L’ETICHETTA', 'QUE HABLE LA ETIQUETA', 'LAISSONS PARLER L’ÉTIQUETTE'],
+  'Read a label': ['Leggi un’etichetta', 'Leer una etiqueta', 'Lire une étiquette'],
+  'Close label': ['Chiudi etichetta', 'Cerrar etiqueta', 'Fermer l’étiquette'],
+  'Nutrition stays on this device. Copy the current package, not a guessed value.': ['I valori restano su questo dispositivo. Copia la confezione attuale, senza indovinare.', 'Los valores permanecen en este dispositivo. Copia el envase actual, no valores supuestos.', 'Les valeurs restent sur cet appareil. Copiez l’emballage actuel, sans inventer de valeurs.'],
+  'Finding nutrition on Open Food Facts...': ['Ricerca dei valori su Open Food Facts…', 'Buscando los valores en Open Food Facts…', 'Recherche des valeurs sur Open Food Facts…'],
+  'Cancel and enter manually': ['Annulla e inserisci a mano', 'Cancelar e introducir a mano', 'Annuler et saisir'],
+  'Cancel lookup': ['Annulla ricerca', 'Cancelar búsqueda', 'Annuler la recherche'],
+  'Scan lookup status': ['Stato della ricerca', 'Estado de la búsqueda', 'État de la recherche'],
+  'Scan again': ['Scansiona ancora', 'Volver a escanear', 'Scanner à nouveau'],
+  'Choose your amount': ['Scegli la quantità', 'Elige la cantidad', 'Choisissez la quantité'],
+  'Food or drink': ['Alimento o bevanda', 'Alimento o bebida', 'Aliment ou boisson'],
+  'Food · g': ['Alimento · g', 'Alimento · g', 'Aliment · g'],
+  'Drink · ml': ['Bevanda · ml', 'Bebida · ml', 'Boisson · ml'],
+  'Type from the catalogue or saved label. Check the package; change it here if needed.': ['Tipo dal catalogo o dall’etichetta salvata. Verifica la confezione e correggilo qui se serve.', 'Tipo del catálogo o de la etiqueta guardada. Comprueba el envase y corrígelo aquí si hace falta.', 'Type du catalogue ou de l’étiquette enregistrée. Vérifiez l’emballage et corrigez-le ici si nécessaire.'],
+  'How much?': ['Quanto ne vuoi?', '¿Qué cantidad?', 'Quelle quantité ?'],
+  'Custom amount ({unit})': ['Altra quantità ({unit})', 'Otra cantidad ({unit})', 'Autre quantité ({unit})'],
+  'Your amount': ['La tua quantità', 'Tu cantidad', 'Votre quantité'],
+  'See score': ['Vedi risultato', 'Ver resultado', 'Voir le résultat'],
+  'Amounts are examples, not recommended servings. Choosing an amount shows the score and saves this label on your device.': ['Le quantità sono esempi, non porzioni consigliate. Scegliendone una vedi il risultato e salvi l’etichetta sul dispositivo.', 'Son cantidades de ejemplo, no porciones recomendadas. Al elegir una, ves el resultado y guardas la etiqueta en tu dispositivo.', 'Les quantités sont des exemples, pas des portions conseillées. En choisir une affiche le résultat et enregistre l’étiquette sur l’appareil.'],
+  'Product barcode': ['Codice a barre', 'Código de barras', 'Code-barres'],
+  'optional': ['facoltativo', 'opcional', 'facultatif'],
+  'captured': ['acquisito', 'capturado', 'capturé'],
+  'Printed EAN / UPC digits': ['Cifre EAN / UPC stampate', 'Dígitos EAN / UPC del envase', 'Chiffres EAN / UPC imprimés'],
+  'Find nutrition online': ['Cerca i valori online', 'Buscar los valores online', 'Rechercher les valeurs en ligne'],
+  'Look up in my saved labels': ['Cerca nelle mie etichette', 'Buscar en mis etiquetas', 'Rechercher dans mes étiquettes'],
+  'Product name': ['Nome del prodotto', 'Nombre del producto', 'Nom du produit'],
+  'e.g. Breakfast cereal': ['es. Cereali', 'p. ej. Cereales', 'p. ex. Céréales'],
+  'Product type': ['Tipo di prodotto', 'Tipo de producto', 'Type de produit'],
+  'Food (grams)': ['Alimento (grammi)', 'Alimento (gramos)', 'Aliment (grammes)'],
+  'Drink (millilitres)': ['Bevanda (millilitri)', 'Bebida (mililitros)', 'Boisson (millilitres)'],
+  'Confirm food or drink': ['Conferma alimento o bevanda', 'Confirma alimento o bebida', 'Confirmer aliment ou boisson'],
+  'Label values are': ['Valori sull’etichetta', 'Valores de la etiqueta', 'Valeurs de l’étiquette'],
+  'Per 100 {unit}': ['Per 100 {unit}', 'Por 100 {unit}', 'Pour 100 {unit}'],
+  'Per labelled serving': ['Per porzione indicata', 'Por porción indicada', 'Par portion indiquée'],
+  'Labelled serving size ({unit})': ['Porzione indicata ({unit})', 'Porción indicada ({unit})', 'Portion indiquée ({unit})'],
+  'e.g. 30': ['es. 30', 'p. ej. 30', 'p. ex. 30'],
+  "Use grams or millilitres, not pieces, cups or ounces. Convert using the package's stated weight or volume.": ['Usa grammi o millilitri, non pezzi, tazze o once. Converti con il peso o volume indicato sulla confezione.', 'Usa gramos o mililitros, no unidades, tazas ni onzas. Convierte con el peso o volumen del envase.', 'Utilisez des grammes ou millilitres, pas des pièces, tasses ou onces. Convertissez avec le poids ou volume de l’emballage.'],
+  'Total sugars (g)': ['Zuccheri totali (g)', 'Azúcares totales (g)', 'Sucres totaux (g)'],
+  'e.g. 8.5': ['es. 8,5', 'p. ej. 8,5', 'p. ex. 8,5'],
+  'Use total sugars / "of which sugars", not added sugars.': ['Usa zuccheri totali / “di cui zuccheri”, non zuccheri aggiunti.', 'Usa azúcares totales / “de los cuales azúcares”, no azúcares añadidos.', 'Utilisez les sucres totaux / « dont sucres », pas les sucres ajoutés.'],
+  'Total carbohydrate (g)': ['Carboidrati totali (g)', 'Hidratos de carbono totales (g)', 'Glucides totaux (g)'],
+  'e.g. 62': ['es. 62', 'p. ej. 62', 'p. ex. 62'],
+  'Same label basis. Include total carbs, not "net carbs".': ['Stessa base dell’etichetta. Usa carboidrati totali, non “netti”.', 'Misma base de la etiqueta. Usa hidratos de carbono totales, no “netos”.', 'Même base que l’étiquette. Utilisez les glucides totaux, pas les glucides « nets ».'],
+  'Your portion ({unit})': ['La tua porzione ({unit})', 'Tu porción ({unit})', 'Votre portion ({unit})'],
+  'Amount you are considering, not a recommended serving': ['Quantità che stai considerando, non una porzione consigliata', 'Cantidad que estás considerando, no una porción recomendada', 'Quantité envisagée, pas une portion conseillée'],
+  'Show sugar score': ['Mostra il punteggio zuccheri', 'Mostrar la puntuación de azúcar', 'Afficher le score de sucre'],
+  'Sugar label result': ['Risultato dell’etichetta', 'Resultado de la etiqueta', 'Résultat de l’étiquette'],
+  'Save label locally': ['Salva sul dispositivo', 'Guardar en el dispositivo', 'Enregistrer sur l’appareil'],
+  'Scan next product': ['Scansiona il prossimo', 'Escanear el siguiente', 'Scanner le suivant'],
+  'Change amount': ['Cambia quantità', 'Cambiar cantidad', 'Changer la quantité'],
+  'Edit numbers': ['Modifica i valori', 'Editar los valores', 'Modifier les valeurs'],
+  'Delete saved label': ['Elimina etichetta', 'Eliminar etiqueta', 'Supprimer l’étiquette'],
+  'No diagnosis, treatment advice, blood-glucose prediction or insulin dosing. Never change medication or your care plan based on this app.': ['Nessuna diagnosi, terapia, previsione glicemica o dose di insulina. Non cambiare farmaci o piano di cura in base a questa app.', 'Sin diagnóstico, tratamiento, predicción de glucosa ni dosis de insulina. Nunca cambies la medicación ni tu plan de atención basándote en esta app.', 'Aucun diagnostic, traitement, prédiction de glycémie ou dosage d’insuline. Ne changez jamais vos médicaments ou votre plan de soins à cause de cette app.'],
+  'ON-DEVICE CAMERA. OPTIONAL ONLINE LOOKUP.': ['FOTOCAMERA LOCALE. RICERCA ONLINE FACOLTATIVA.', 'CÁMARA LOCAL. BÚSQUEDA ONLINE OPCIONAL.', 'CAMÉRA LOCALE. RECHERCHE EN LIGNE FACULTATIVE.'],
+  'Find the barcode': ['Inquadra il codice a barre', 'Encuadra el código de barras', 'Cadrez le code-barres'],
+  'Close camera': ['Chiudi fotocamera', 'Cerrar cámara', 'Fermer la caméra'],
+  'Hold the entire barcode in view, with good light. A rear camera is preferred when available.': ['Inquadra tutto il codice con buona luce. Se disponibile viene preferita la fotocamera posteriore.', 'Encuadra todo el código con buena luz. Se prefiere la cámara trasera cuando está disponible.', 'Cadrez le code entier avec un bon éclairage. La caméra arrière est privilégiée si disponible.'],
+  'Starting the camera...': ['Avvio fotocamera…', 'Iniciando la cámara…', 'Démarrage de la caméra…'],
+  'A barcode identifies the product. With online lookup enabled, new codes are sent to Open Food Facts for nutrition. Saved labels work offline. Camera frames are never saved or uploaded.': ['Il codice identifica il prodotto. Con la ricerca online, i nuovi codici sono inviati a Open Food Facts. Le etichette salvate funzionano offline. I fotogrammi non vengono salvati né inviati.', 'El código identifica el producto. Con la búsqueda online, los códigos nuevos se envían a Open Food Facts. Las etiquetas guardadas funcionan sin conexión. Las imágenes no se guardan ni se envían.', 'Le code identifie le produit. Avec la recherche en ligne, les nouveaux codes sont envoyés à Open Food Facts. Les étiquettes enregistrées fonctionnent hors ligne. Les images ne sont ni enregistrées ni envoyées.'],
+  'Use manual entry': ['Inserisci a mano', 'Introducir a mano', 'Saisir manuellement'],
+  'CLARITY, WITH LIMITS': ['CHIAREZZA, CON LIMITI', 'CLARIDAD, CON LÍMITES', 'CLARTÉ, AVEC DES LIMITES'],
+  'A little context': ['Un po’ di contesto', 'Un poco de contexto', 'Un peu de contexte'],
+  'Close information': ['Chiudi informazioni', 'Cerrar información', 'Fermer les informations'],
+  'The score is sugar density. Nothing more.': ['Il punteggio misura la densità degli zuccheri. Nient’altro.', 'La puntuación mide la densidad de azúcar. Nada más.', 'Le score mesure la densité de sucre. Rien de plus.'],
+  '1/3 = lower, 2/3 = medium, 3/3 = higher total sugar per 100 g of food or 100 ml of drink. It is a simple UK label-guidance band, not a percentage, a Nutri-Score, a health rating or a clinical risk score.': ['1/3 = meno, 2/3 = medi, 3/3 = più zuccheri totali per 100 g di alimento o 100 ml di bevanda. Sono fasce della guida britannica, non percentuali, Nutri-Score, giudizi sulla salute o rischio clinico.', '1/3 = menor, 2/3 = media, 3/3 = mayor cantidad de azúcares por 100 g de alimento o 100 ml de bebida. Son bandas de la guía británica, no porcentajes, Nutri-Score, valoraciones de salud ni riesgo clínico.', '1/3 = faible, 2/3 = moyenne, 3/3 = forte teneur en sucres pour 100 g d’aliment ou 100 ml de boisson. Ce sont des bandes du guide britannique, pas des pourcentages, Nutri-Score, évaluations de santé ou risques cliniques.'],
+  'Total sugar thresholds': ['Soglie degli zuccheri totali', 'Umbrales de azúcares totales', 'Seuils de sucres totaux'],
+  'Band': ['Fascia', 'Banda', 'Bande'],
+  'Food / 100 g': ['Alimento / 100 g', 'Alimento / 100 g', 'Aliment / 100 g'],
+  'Drink / 100 ml': ['Bevanda / 100 ml', 'Bebida / 100 ml', 'Boisson / 100 ml'],
+  '1 · Lower': ['1 · Meno', '1 · Menor', '1 · Faible'],
+  '2 · Medium': ['2 · Medi', '2 · Media', '2 · Moyenne'],
+  '3 · Higher': ['3 · Più', '3 · Mayor', '3 · Forte'],
+  '≤ 2.5 g': ['≤ 2,5 g', '≤ 2,5 g', '≤ 2,5 g'],
+  '> 5 to 22.5 g': ['> 5 fino a 22,5 g', '> 5 a 22,5 g', '> 5 à 22,5 g'],
+  '> 2.5 to 11.25 g': ['> 2,5 fino a 11,25 g', '> 2,5 a 11,25 g', '> 2,5 à 11,25 g'],
+  '> 22.5 g': ['> 22,5 g', '> 22,5 g', '> 22,5 g'],
+  '> 11.25 g': ['> 11,25 g', '> 11,25 g', '> 11,25 g'],
+  'Only the per-100 sugar thresholds are used. The full UK front-of-pack scheme also has portion criteria and other nutrients; this app does not reproduce that scheme.': ['Si usano solo le soglie per 100 g/ml. Lo schema britannico completo considera anche porzioni e altri nutrienti: questa app non lo riproduce.', 'Solo se usan los umbrales por 100 g/ml. El sistema británico completo incluye porciones y otros nutrientes; esta app no lo reproduce.', 'Seuls les seuils pour 100 g/ml sont utilisés. Le système britannique complet inclut les portions et d’autres nutriments ; cette app ne le reproduit pas.'],
+  'Diabetes cannot be reduced to a sugar score.': ['Il diabete non si riduce a un punteggio zuccheri.', 'La diabetes no se reduce a una puntuación de azúcar.', 'Le diabète ne se résume pas à un score de sucre.'],
+  'Starch and other carbohydrates matter too. A low-sugar food can still contain substantial carbohydrate. Portion size, fibre, food preparation, activity, medication and individual response all matter. This app does not assess glycaemic index, predict glucose changes or determine whether food is safe for you.': ['Contano anche amido e altri carboidrati: un alimento con pochi zuccheri può contenere molti carboidrati. Contano porzione, fibre, preparazione, attività, farmaci e risposta individuale. L’app non valuta l’indice glicemico, non prevede variazioni della glicemia né stabilisce se un alimento è sicuro per te.', 'También importan el almidón y otros hidratos: un alimento con poco azúcar puede contener muchos hidratos de carbono. Importan la porción, fibra, preparación, actividad, medicación y respuesta individual. La app no evalúa el índice glucémico, no predice cambios de glucosa ni decide si un alimento es seguro para ti.', 'L’amidon et les autres glucides comptent aussi : un aliment peu sucré peut contenir beaucoup de glucides. La portion, les fibres, la préparation, l’activité, les médicaments et la réponse individuelle comptent. L’app n’évalue pas l’indice glycémique, ne prédit pas la glycémie et ne détermine pas si un aliment est sûr pour vous.'],
+  'Do not use this app for insulin dosing, treating a hypo, emergencies, diagnosis, or medication changes.': ['Non usare questa app per dosare insulina, trattare ipoglicemie, emergenze, diagnosi o cambiare farmaci.', 'No uses esta app para calcular insulina, tratar hipoglucemias, emergencias, diagnóstico ni cambios de medicación.', 'N’utilisez pas cette app pour doser l’insuline, traiter une hypoglycémie, les urgences, le diagnostic ou changer de médicaments.'],
+  'Follow your existing care plan and ask your clinician or registered dietitian for personalised guidance. High-sugar products can have a role in a prescribed hypo plan; this app must not override it.': ['Segui il tuo piano di cura e chiedi indicazioni personalizzate al medico o dietista qualificato. Prodotti zuccherati possono far parte di un piano prescritto per l’ipoglicemia: l’app non deve sostituirlo.', 'Sigue tu plan de atención y consulta al médico o dietista acreditado. Los productos azucarados pueden formar parte de un plan prescrito para hipoglucemias; la app no debe sustituirlo.', 'Suivez votre plan de soins et consultez votre médecin ou diététicien qualifié. Des produits sucrés peuvent faire partie d’un plan prescrit pour les hypoglycémies ; l’app ne doit pas le remplacer.'],
+  'Read the actual package.': ['Leggi la confezione attuale.', 'Lee el envase actual.', 'Lisez l’emballage actuel.'],
+  "Manually entered and community-supplied catalogue values may be mistaken, incomplete, rounded or out of date. Confirm the product, food/drink type and per-100 units before scoring. Online values use the as-sold, unprepared label when available, never estimated or added-sugar values. Use total sugars and total carbohydrate on the same basis. US-style per-serving labels can be converted only when the serving's weight or volume is known. Fibre and sugar-alcohol labelling conventions vary by country. The optional portion calculation is arithmetic, not a recommended serving.": ['Valori manuali e del catalogo possono essere errati, incompleti, arrotondati o vecchi. Verifica prodotto, alimento/bevanda e unità per 100 g/ml prima del risultato. Si usano valori del prodotto venduto non preparato, mai stimati o relativi solo agli zuccheri aggiunti. Usa zuccheri e carboidrati totali sulla stessa base. Le etichette per porzione sono convertibili solo con peso o volume noto. Le regole per fibre e polioli variano per paese. Il calcolo della porzione è solo aritmetica, non un consiglio.', 'Los valores manuales y del catálogo pueden ser erróneos, incompletos, redondeados o antiguos. Verifica el producto, alimento/bebida y unidades por 100 g/ml antes del resultado. Se usan valores del producto vendido sin preparar, nunca estimaciones ni solo azúcares añadidos. Usa azúcares e hidratos totales sobre la misma base. Las etiquetas por porción solo se convierten con peso o volumen conocido. Las normas sobre fibra y polialcoholes varían por país. El cálculo de la porción es aritmética, no una recomendación.', 'Les valeurs manuelles et du catalogue peuvent être erronées, incomplètes, arrondies ou anciennes. Vérifiez le produit, aliment/boisson et les unités pour 100 g/ml avant le résultat. Les valeurs concernent le produit vendu non préparé, jamais des estimations ou seulement les sucres ajoutés. Utilisez sucres et glucides totaux sur la même base. Les étiquettes par portion ne sont convertibles qu’avec un poids ou volume connu. Les règles sur les fibres et polyols varient selon le pays. Le calcul de portion est arithmétique, pas un conseil.'],
+  'Local library. Optional online lookup.': ['Libreria locale. Ricerca online facoltativa.', 'Biblioteca local. Búsqueda online opcional.', 'Bibliothèque locale. Recherche en ligne facultative.'],
+  'Online lookup is on by default. Scanning a new barcode or tapping "Find nutrition online" sends that code to Open Food Facts, which also receives ordinary request metadata such as your IP address and browser information. No photos, saved library, portions or health information are sent. No accounts, analytics or external fonts. Turn off Online lookup for local-only scans and manual entry. Saved labels are recalled without network requests.': ['La ricerca online è attiva per default. Un nuovo codice o “Cerca i valori online” invia il codice a Open Food Facts, insieme ai normali metadati di rete come IP e browser. Non si inviano foto, libreria, porzioni o informazioni sanitarie. Nessun account, analisi o font esterno. Disattiva la ricerca per scansioni solo locali e inserimento manuale. Le etichette salvate si richiamano senza richieste di rete.', 'La búsqueda online está activada por defecto. Un código nuevo o “Buscar los valores online” envía el código a Open Food Facts, junto con metadatos habituales como IP y navegador. No se envían fotos, biblioteca, porciones ni información sanitaria. Sin cuentas, analítica ni fuentes externas. Desactiva la búsqueda para escaneos locales y entrada manual. Las etiquetas guardadas se recuperan sin peticiones de red.', 'La recherche en ligne est activée par défaut. Un nouveau code ou « Rechercher les valeurs en ligne » envoie le code à Open Food Facts, avec les métadonnées habituelles comme l’IP et le navigateur. Aucun envoi de photos, bibliothèque, portions ou données de santé. Aucun compte, analyse ou police externe. Désactivez la recherche pour un usage local et manuel. Les étiquettes enregistrées sont retrouvées sans requêtes réseau.'],
+  'Data is not encrypted; someone using this browser profile can read it. Backups contain product names, nutrition values and catalogue attribution: keep them private. Clearing site data or private browsing may erase your library.': ['I dati non sono cifrati: chi usa questo profilo browser può leggerli. I backup contengono nomi, valori e fonte: mantienili privati. Cancellare i dati del sito o usare la navigazione privata può cancellare la libreria.', 'Los datos no están cifrados: quien use este perfil puede leerlos. Las copias contienen nombres, valores y fuentes; mantenlas privadas. Borrar datos del sitio o usar navegación privada puede borrar la biblioteca.', 'Les données ne sont pas chiffrées : les utilisateurs de ce profil peuvent les lire. Les sauvegardes contiennent noms, valeurs et sources ; gardez-les privées. Effacer les données du site ou utiliser la navigation privée peut supprimer la bibliothèque.'],
+  'Colors, sound and a little tap.': ['Colori, suoni e una piccola vibrazione.', 'Colores, sonidos y una pequeña vibración.', 'Des couleurs, un son et une petite vibration.'],
+  'Green = lower, amber = medium, red = higher sugar density. The number and text always accompany color; green does not mean diabetes-safe. A scan gives a gentle confirmation; a score gives one, two or three short pulses. Sound and vibration can be switched off separately. Browser support, silent settings and user-interaction restrictions may prevent feedback; iPhone Safari does not support web vibration.': ['Verde = meno, ambra = medi, rosso = più zuccheri per 100 g/ml. Numero e testo accompagnano sempre il colore; verde non significa sicuro per il diabete. Una scansione dà una conferma leggera; il punteggio uno, due o tre impulsi. Suono e vibrazione si disattivano separatamente. Browser, modalità silenziosa e limiti di interazione possono bloccarli; Safari su iPhone non supporta la vibrazione web.', 'Verde = menor, ámbar = media, rojo = mayor densidad de azúcar. Siempre hay número y texto; verde no significa seguro para la diabetes. Un escaneo da una confirmación suave; la puntuación uno, dos o tres pulsos. Sonido y vibración se desactivan por separado. El navegador, modo silencioso y restricciones de interacción pueden impedirlos; Safari en iPhone no admite vibración web.', 'Vert = faible, ambre = moyenne, rouge = forte densité de sucre. Un nombre et un texte accompagnent la couleur ; vert ne signifie pas sans risque pour le diabète. Un scan donne une confirmation légère ; le score un, deux ou trois impulsions. Son et vibration se désactivent séparément. Le navigateur, le mode silencieux et les restrictions d’interaction peuvent les bloquer ; Safari sur iPhone ne prend pas en charge la vibration web.'],
+  'Try scan feedback': ['Prova suono e vibrazione', 'Probar sonido y vibración', 'Essayer le son et la vibration'],
+  'Open data, with attribution.': ['Dati aperti, con fonte.', 'Datos abiertos, con atribución.', 'Données ouvertes, avec attribution.'],
+  'Catalogue data comes from': ['I dati del catalogo provengono da', 'Los datos del catálogo proceden de', 'Les données du catalogue proviennent de'],
+  ', under the': [', secondo le licenze', ', bajo las licencias', ', sous les licences'],
+  'and': ['e', 'y', 'et'],
+  '. Imported labels retain their source and retrieval date. No product photos are fetched. Open Food Facts does not endorse this app.': ['. Le etichette importate conservano fonte e data. Nessuna foto prodotto viene scaricata. Open Food Facts non approva questa app.', '. Las etiquetas importadas conservan fuente y fecha. No se descargan fotos. Open Food Facts no avala esta app.', '. Les étiquettes importées conservent la source et la date. Aucune photo n’est téléchargée. Open Food Facts ne recommande pas cette app.'],
+  'Offline means prepared first.': ['Per l’offline, prepara prima.', 'Para usar sin conexión, prepara primero.', 'Pour le hors ligne, préparez d’abord.'],
+  'Open the app online once and wait for "Ready offline". App assets, including the scanner, are cached on your device. Your browser may evict cached files or stored data; exporting a backup is recommended. Safari: Share → Add to Home Screen. Android Chrome: browser menu → Install app / Add to Home screen. Installation is optional.': ['Apri l’app online una volta e attendi “Pronta offline”. File e scanner vengono memorizzati sul dispositivo. Il browser può eliminarli: esporta un backup. Safari: Condividi → Aggiungi alla schermata Home. Chrome Android: menu → Installa app / Aggiungi a schermata Home. Installazione facoltativa.', 'Abre la app online una vez y espera “Lista sin conexión”. Los archivos y el escáner se guardan en el dispositivo. El navegador puede eliminarlos; exporta una copia. Safari: Compartir → Añadir a pantalla de inicio. Chrome Android: menú → Instalar app / Añadir a pantalla de inicio. Instalación opcional.', 'Ouvrez l’app en ligne une fois et attendez « Prête hors ligne ». Les fichiers et le scanner sont mis en cache sur l’appareil. Le navigateur peut les supprimer ; exportez une sauvegarde. Safari : Partager → Ajouter à l’écran d’accueil. Chrome Android : menu → Installer l’app / Ajouter à l’écran d’accueil. Installation facultative.'],
+  'Sources, not endorsements.': ['Fonti, non approvazioni.', 'Fuentes, no avales.', 'Sources, pas recommandations.'],
+  'The explanations are bundled offline. The links below open external pages only if chosen and require internet access.': ['Le spiegazioni sono disponibili offline. I link aprono pagine esterne solo se scelti e richiedono internet.', 'Las explicaciones están disponibles sin conexión. Los enlaces abren páginas externas solo si los eliges y requieren internet.', 'Les explications sont disponibles hors ligne. Les liens ouvrent des pages externes uniquement si vous les choisissez et nécessitent internet.'],
+  'NHS: reading food labels ↗': ['NHS: leggere le etichette ↗', 'NHS: leer las etiquetas ↗', 'NHS : lire les étiquettes ↗'],
+  'UK front-of-pack guidance (food and drink criteria) ↗': ['Guida britannica (alimenti e bevande) ↗', 'Guía británica (alimentos y bebidas) ↗', 'Guide britannique (aliments et boissons) ↗'],
+  'Diabetes UK: carbohydrates and individual care ↗': ['Diabetes UK: carboidrati e cura individuale ↗', 'Diabetes UK: hidratos y atención individual ↗', 'Diabetes UK : glucides et soins individuels ↗'],
+  'Local-only mode. Scans recall saved labels; new products need manual entry. No catalogue requests.': ['Modalità solo locale. Le scansioni richiamano etichette salvate; i nuovi prodotti richiedono inserimento manuale. Nessuna richiesta al catalogo.', 'Modo local. Los escaneos recuperan etiquetas guardadas; los productos nuevos requieren entrada manual. Sin peticiones al catálogo.', 'Mode local. Les scans retrouvent les étiquettes enregistrées ; les nouveaux produits nécessitent une saisie. Aucune requête au catalogue.'],
+  'Invalid scan preferences.': ['Preferenze scansione non valide.', 'Preferencias del escaneo no válidas.', 'Préférences de scan non valides.'],
+  'Preferences could not be read: {error}. Default switches are active; changing one replaces the stored preferences.': ['Preferenze illeggibili: {error}. Sono attivi i valori predefiniti; cambiando un interruttore le sostituisci.', 'No se pueden leer las preferencias: {error}. Se usan los valores predeterminados; cambiar un ajuste las sustituye.', 'Préférences illisibles : {error}. Les valeurs par défaut sont actives ; changer un réglage les remplace.'],
+  'Preferences not saved: {error}. The switches apply for this visit only.': ['Preferenze non salvate: {error}. Valgono solo per questa visita.', 'Preferencias no guardadas: {error}. Solo se aplican en esta visita.', 'Préférences non enregistrées : {error}. Elles valent uniquement pour cette visite.'],
+  'Sound is unavailable in this browser. Colors and text always work.': ['Suono non disponibile nel browser. Colori e testo funzionano sempre.', 'Sonido no disponible en este navegador. Los colores y el texto siempre funcionan.', 'Son indisponible dans ce navigateur. Les couleurs et le texte fonctionnent toujours.'],
+  'Vibration is unavailable in this browser. Colors and text always work.': ['Vibrazione non disponibile nel browser. Colori e testo funzionano sempre.', 'Vibración no disponible en este navegador. Los colores y el texto siempre funcionan.', 'Vibration indisponible dans ce navigateur. Les couleurs et le texte fonctionnent toujours.'],
+  'Sound and Vibration are unavailable in this browser. Colors and text always work.': ['Suono e vibrazione non disponibili nel browser. Colori e testo funzionano sempre.', 'Sonido y vibración no disponibles en este navegador. Los colores y el texto siempre funcionan.', 'Son et vibration indisponibles dans ce navigateur. Les couleurs et le texte fonctionnent toujours.'],
+  'Local labels could not be read: {error}. Saving is blocked to protect the original data. Export it, restore a valid backup, or explicitly reset it. Label checking still works.': ['Etichette locali illeggibili: {error}. Il salvataggio è bloccato per proteggere gli originali. Esportali, ripristina un backup valido o reimpostali esplicitamente. Puoi ancora leggere un’etichetta.', 'Etiquetas locales ilegibles: {error}. Se bloquea el guardado para proteger los datos originales. Expórtalos, restaura una copia válida o restablécelos expresamente. Puedes seguir leyendo etiquetas.', 'Étiquettes locales illisibles : {error}. L’enregistrement est bloqué pour protéger les originaux. Exportez-les, restaurez une sauvegarde valide ou réinitialisez-les explicitement. Vous pouvez encore lire une étiquette.'],
+  'Not saved: {error}. Check browser storage permissions or available space.': ['Non salvato: {error}. Verifica permessi di archiviazione e spazio disponibile.', 'No guardado: {error}. Comprueba los permisos de almacenamiento y el espacio disponible.', 'Non enregistré : {error}. Vérifiez les autorisations de stockage et l’espace disponible.'],
+  'Open saved label for {name}': ['Apri etichetta di {name}', 'Abrir etiqueta de {name}', 'Ouvrir l’étiquette de {name}'],
+  '{amount} sugar / 100 {unit}': ['{amount} zuccheri / 100 {unit}', '{amount} azúcar / 100 {unit}', '{amount} sucres / 100 {unit}'],
+  'Lower sugar': ['Meno zuccheri', 'Menos azúcar', 'Peu de sucre'],
+  'Medium sugar': ['Zuccheri medi', 'Azúcar medio', 'Sucre moyen'],
+  'Higher sugar': ['Più zuccheri', 'Más azúcar', 'Beaucoup de sucre'],
+  'Nothing matches yet.': ['Nessun risultato.', 'Sin resultados.', 'Aucun résultat.'],
+  'Your labels live here.': ['Le tue etichette vivono qui.', 'Tus etiquetas viven aquí.', 'Vos étiquettes vivent ici.'],
+  'Try another name or barcode.': ['Prova un altro nome o codice.', 'Prueba otro nombre o código.', 'Essayez un autre nom ou code.'],
+  'Scan. Choose an amount.': ['Scansiona. Scegli una quantità.', 'Escanea. Elige una cantidad.', 'Scannez. Choisissez une quantité.'],
+  'The result saves automatically.': ['Il risultato si salva automaticamente.', 'El resultado se guarda automáticamente.', 'Le résultat s’enregistre automatiquement.'],
+  "Discard this label's unsaved changes? Save it locally first if you want to keep it.": ['Scartare le modifiche non salvate? Salva prima sul dispositivo se vuoi conservarle.', '¿Descartar los cambios sin guardar? Guarda primero en el dispositivo si quieres conservarlos.', 'Abandonner les modifications non enregistrées ? Enregistrez d’abord sur l’appareil pour les conserver.'],
+  'New barcode. Check the current package label before scoring.': ['Nuovo codice. Verifica l’etichetta attuale prima del risultato.', 'Código nuevo. Comprueba la etiqueta actual antes del resultado.', 'Nouveau code. Vérifiez l’étiquette actuelle avant le résultat.'],
+  'Check the current package.': ['Verifica la confezione attuale.', 'Comprueba el envase actual.', 'Vérifiez l’emballage actuel.'],
+  'Community data, possibly edited locally. Check this package, food/drink type and units.': ['Dati della comunità, forse modificati localmente. Verifica confezione, tipo e unità.', 'Datos comunitarios, quizá editados localmente. Comprueba el envase, tipo y unidades.', 'Données communautaires, éventuellement modifiées localement. Vérifiez l’emballage, le type et les unités.'],
+  '· retrieved {date}. {detail}': ['· consultato il {date}. {detail}', '· consultado el {date}. {detail}', '· consulté le {date}. {detail}'],
+  'Product not found': ['Prodotto non trovato', 'Producto no encontrado', 'Produit introuvable'],
+  'Lookup unavailable': ['Ricerca non disponibile', 'Búsqueda no disponible', 'Recherche indisponible'],
+  'Lookup cancelled': ['Ricerca annullata', 'Búsqueda cancelada', 'Recherche annulée'],
+  'Lookup paused': ['Ricerca in pausa', 'Búsqueda en pausa', 'Recherche en pause'],
+  'No usable nutrition to score. Nothing was added to your library.': ['Nessun valore utilizzabile. Nulla è stato aggiunto alla libreria.', 'No hay valores utilizables. No se ha añadido nada a la biblioteca.', 'Aucune valeur utilisable. Rien n’a été ajouté à la bibliothèque.'],
+  'Choose your amount. The score and local save happen automatically.': ['Scegli la quantità. Risultato e salvataggio locale sono automatici.', 'Elige la cantidad. El resultado y el guardado local son automáticos.', 'Choisissez la quantité. Résultat et enregistrement local sont automatiques.'],
+  'Local-only mode. Enter the nutrition from this package.': ['Modalità solo locale. Inserisci i valori della confezione.', 'Modo local. Introduce los valores del envase.', 'Mode local. Saisissez les valeurs de l’emballage.'],
+  'You are offline. This barcode has no saved label; enter the package nutrition or look it up when online.': ['Sei offline e questo codice non ha un’etichetta salvata. Inserisci i valori a mano o cerca online quando sei connesso.', 'Estás sin conexión y este código no tiene una etiqueta guardada. Introduce los valores a mano o búscalos cuando tengas conexión.', 'Vous êtes hors ligne et ce code n’a pas d’étiquette enregistrée. Saisissez les valeurs ou recherchez-les une fois connecté.'],
+  'Nutrition found. The catalogue suggests {type}, but categories can be wrong. Choose food or drink and check the per-100 values against this package before scoring. Your portion is never guessed.': ['Valori trovati. Il catalogo suggerisce {type}, ma può sbagliare. Scegli alimento o bevanda e verifica i valori per 100 g/ml sulla confezione. La porzione non viene indovinata.', 'Valores encontrados. El catálogo sugiere {type}, pero puede equivocarse. Elige alimento o bebida y verifica los valores por 100 g/ml en el envase. La porción nunca se supone.', 'Valeurs trouvées. Le catalogue suggère {type}, mais peut se tromper. Choisissez aliment ou boisson et vérifiez les valeurs pour 100 g/ml sur l’emballage. La portion n’est jamais devinée.'],
+  'a drink': ['una bevanda', 'una bebida', 'une boisson'],
+  'food': ['un alimento', 'un alimento', 'un aliment'],
+  'Online lookup timed out.': ['Tempo di ricerca scaduto.', 'La búsqueda ha agotado el tiempo.', 'Le délai de recherche est dépassé.'],
+  'Online lookup failed: {error}': ['Ricerca online fallita: {error}', 'Búsqueda online fallida: {error}', 'Échec de la recherche en ligne : {error}'],
+  '{detail} Enter the package label manually; no score was guessed.': ['{detail} Inserisci l’etichetta a mano; nessun punteggio è stato inventato.', '{detail} Introduce la etiqueta a mano; no se ha inventado ninguna puntuación.', '{detail} Saisissez l’étiquette ; aucun score n’a été inventé.'],
+  '{detail} Manual entry is still available.': ['{detail} L’inserimento manuale resta disponibile.', '{detail} La entrada manual sigue disponible.', '{detail} La saisie manuelle reste disponible.'],
+  'Online lookup cancelled. Scan again when ready.': ['Ricerca annullata. Scansiona di nuovo quando vuoi.', 'Búsqueda cancelada. Escanea de nuevo cuando quieras.', 'Recherche annulée. Scannez à nouveau quand vous voulez.'],
+  'Online lookup cancelled. Copy the nutrition from this package.': ['Ricerca annullata. Copia i valori dalla confezione.', 'Búsqueda cancelada. Copia los valores del envase.', 'Recherche annulée. Copiez les valeurs de l’emballage.'],
+  'Replace these unsaved values with online nutrition? Check the package after lookup.': ['Sostituire questi valori non salvati con quelli online? Poi verifica la confezione.', '¿Sustituir estos valores sin guardar por los de internet? Después comprueba el envase.', 'Remplacer ces valeurs non enregistrées par celles du catalogue ? Vérifiez ensuite l’emballage.'],
+  'Saved label entered {date}. Recipes and labels can change; recheck this package.': ['Etichetta inserita il {date}. Ricette e valori possono cambiare: verifica la confezione.', 'Etiqueta introducida el {date}. Las recetas y valores pueden cambiar: comprueba el envase.', 'Étiquette saisie le {date}. Recettes et valeurs peuvent changer : vérifiez l’emballage.'],
+  'Based only on the label values you entered. Check the package before relying on the numbers.': ['Basato solo sui valori inseriti. Verifica la confezione prima di usarli.', 'Basado solo en los valores introducidos. Comprueba el envase antes de usarlos.', 'Basé uniquement sur les valeurs saisies. Vérifiez l’emballage avant de les utiliser.'],
+  'Based on imported catalogue values and your edits. This is not verified nutrition or medical advice.': ['Basato sui valori importati e le tue modifiche. Non sono valori verificati né consigli medici.', 'Basado en valores importados y tus cambios. No son valores verificados ni consejo médico.', 'Basé sur les valeurs importées et vos modifications. Ce ne sont pas des valeurs vérifiées ni un avis médical.'],
+  'SUGAR LEVEL, NOT DIABETES RISK': ['ZUCCHERI, NON RISCHIO DI DIABETE', 'AZÚCAR, NO RIESGO DE DIABETES', 'SUCRE, PAS RISQUE DE DIABÈTE'],
+  'Total sugar per 100 {unit}': ['Zuccheri totali per 100 {unit}', 'Azúcares totales por 100 {unit}', 'Sucres totaux pour 100 {unit}'],
+  '1 Lower': ['1 Meno', '1 Menor', '1 Faible'],
+  '2 Medium': ['2 Medi', '2 Medio', '2 Moyen'],
+  '3 Higher': ['3 Più', '3 Mayor', '3 Fort'],
+  'Green / amber / red = sugar density only. Green does not mean diabetes-safe.': ['Verde / ambra / rosso = solo densità degli zuccheri. Verde non significa sicuro per il diabete.', 'Verde / ámbar / rojo = solo densidad de azúcar. Verde no significa seguro para la diabetes.', 'Vert / ambre / rouge = densité de sucre uniquement. Vert ne signifie pas sans risque pour le diabète.'],
+  'Sugars / 100 {unit}': ['Zuccheri / 100 {unit}', 'Azúcares / 100 {unit}', 'Sucres / 100 {unit}'],
+  'Total carbs / 100 {unit}': ['Carboidrati / 100 {unit}', 'Hidratos totales / 100 {unit}', 'Glucides totaux / 100 {unit}'],
+  'Your portion': ['La tua porzione', 'Tu porción', 'Votre portion'],
+  'Not entered': ['Non inserito', 'No introducido', 'Non renseigné'],
+  'Sugars': ['Zuccheri', 'Azúcares', 'Sucres'],
+  'Total carbs': ['Carboidrati totali', 'Hidratos totales', 'Glucides totaux'],
+  'No portion was entered, so per-portion amounts are unknown. Edit the numbers to add one.': ['Porzione non inserita: i valori per porzione sono sconosciuti. Modifica i valori per aggiungerla.', 'No se ha indicado porción: los valores por porción son desconocidos. Edita los valores para añadirla.', 'Aucune portion indiquée : les valeurs par portion sont inconnues. Modifiez les valeurs pour en ajouter une.'],
+  'Arithmetic only. This is not a recommended portion or an insulin-dosing calculation.': ['Solo aritmetica. Non è una porzione consigliata né un calcolo per dosare insulina.', 'Solo aritmética. No es una porción recomendada ni un cálculo de dosis de insulina.', 'Arithmétique uniquement. Pas une portion conseillée ni un calcul de dose d’insuline.'],
+  'Lower sugar does not mean diabetes-safe.': ['Meno zuccheri non significa sicuro per il diabete.', 'Menos azúcar no significa seguro para la diabetes.', 'Moins de sucre ne signifie pas sans risque pour le diabète.'],
+  'Total carbohydrate was not entered. Sugar alone is not enough to understand carbohydrate amounts. Add total carbs from the label for more context.': ['Carboidrati totali non inseriti. Gli zuccheri da soli non bastano per capire i carboidrati. Aggiungili dall’etichetta per più contesto.', 'No se han indicado los hidratos totales. El azúcar por sí solo no basta para entender los hidratos. Añádelos desde la etiqueta para más contexto.', 'Glucides totaux non renseignés. Le sucre seul ne suffit pas à comprendre les glucides. Ajoutez-les depuis l’étiquette pour plus de contexte.'],
+  'Total carbohydrate includes more than sugar. Even a lower-sugar product can contain substantial carbohydrate. These figures do not predict your blood-glucose response.': ['I carboidrati totali includono più degli zuccheri. Anche un prodotto con pochi zuccheri può avere molti carboidrati. I numeri non prevedono la tua risposta glicemica.', 'Los hidratos totales incluyen más que azúcar. Un producto con poco azúcar puede tener muchos hidratos. Estas cifras no predicen tu respuesta glucémica.', 'Les glucides totaux incluent plus que le sucre. Un produit peu sucré peut avoir beaucoup de glucides. Ces chiffres ne prédisent pas votre réponse glycémique.'],
+  'Why this band?': ['Perché questa fascia?', '¿Por qué esta banda?', 'Pourquoi cette bande ?'],
+  '{type} thresholds per 100 {unit}: lower ≤ {low} g, medium > {low2} to {high} g, higher > {high2} g.': ['Soglie per {type}, 100 {unit}: meno ≤ {low} g, medi > {low2} fino a {high} g, più > {high2} g.', 'Umbrales para {type}, 100 {unit}: menor ≤ {low} g, medio > {low2} a {high} g, mayor > {high2} g.', 'Seuils pour {type}, 100 {unit} : faible ≤ {low} g, moyen > {low2} à {high} g, fort > {high2} g.'],
+  'Food': ['alimento', 'alimento', 'aliment'],
+  'Drink': ['bevanda', 'bebida', 'boisson'],
+  'Entered label: {amount} total sugars {basis}. Rounded display values do not change the band.': ['Etichetta inserita: {amount} zuccheri totali {basis}. L’arrotondamento visualizzato non cambia la fascia.', 'Etiqueta introducida: {amount} azúcares totales {basis}. El redondeo mostrado no cambia la banda.', 'Étiquette saisie : {amount} de sucres totaux {basis}. L’arrondi affiché ne change pas la bande.'],
+  'per 100 {unit}': ['per 100 {unit}', 'por 100 {unit}', 'pour 100 {unit}'],
+  'per {amount} {unit} serving, converted to per 100 {unit2}': ['per porzione di {amount} {unit}, convertita per 100 {unit2}', 'por porción de {amount} {unit}, convertida a 100 {unit2}', 'par portion de {amount} {unit}, convertie pour 100 {unit2}'],
+  'This uses UK sugar-density criteria, not the full front-of-pack scheme or a personalised diabetes assessment.': ['Usa criteri britannici di densità degli zuccheri, non lo schema completo né una valutazione personale del diabete.', 'Usa criterios británicos de densidad de azúcar, no el sistema completo ni una valoración personal de diabetes.', 'Utilise les critères britanniques de densité de sucre, pas le système complet ni une évaluation personnelle du diabète.'],
+  'Read the sources and limitations': ['Leggi fonti e limiti', 'Leer fuentes y límites', 'Lire les sources et limites'],
+  'Storage unavailable - checking only': ['Archiviazione non disponibile - sola lettura', 'Almacenamiento no disponible - solo consulta', 'Stockage indisponible - consultation uniquement'],
+  'Saved on this device': ['Salvato su questo dispositivo', 'Guardado en este dispositivo', 'Enregistré sur cet appareil'],
+  'Retry local save': ['Riprova a salvare', 'Reintentar el guardado', 'Réessayer l’enregistrement'],
+  'Saved automatically on this device.': ['Salvato automaticamente su questo dispositivo.', 'Guardado automáticamente en este dispositivo.', 'Enregistré automatiquement sur cet appareil.'],
+  'Not saved. Local storage is unavailable; your result is still shown.': ['Non salvato. Archiviazione locale non disponibile; il risultato resta visibile.', 'No guardado. El almacenamiento local no está disponible; el resultado sigue visible.', 'Non enregistré. Le stockage local est indisponible ; le résultat reste affiché.'],
+  'Check the current package and keep both nutrient values on the same label basis.': ['Verifica la confezione e mantieni entrambi i nutrienti sulla stessa base.', 'Comprueba el envase y usa la misma base para ambos nutrientes.', 'Vérifiez l’emballage et gardez la même base pour les deux nutriments.'],
+  'Saved on this device. Recheck the package next time: recipes can change.': ['Salvato sul dispositivo. Ricontrolla la confezione la prossima volta: le ricette cambiano.', 'Guardado en el dispositivo. Revisa el envase la próxima vez: las recetas cambian.', 'Enregistré sur l’appareil. Vérifiez l’emballage la prochaine fois : les recettes changent.'],
+  'Delete the saved label for "{name}" from this browser?': ['Eliminare l’etichetta di “{name}” da questo browser?', '¿Eliminar la etiqueta de “{name}” de este navegador?', 'Supprimer l’étiquette de « {name} » de ce navigateur ?'],
+  'Local label deleted.': ['Etichetta locale eliminata.', 'Etiqueta local eliminada.', 'Étiquette locale supprimée.'],
+  'No local label for this code. Enter the nutrition from the package.': ['Nessuna etichetta locale per questo codice. Inserisci i valori della confezione.', 'No hay etiqueta local para este código. Introduce los valores del envase.', 'Aucune étiquette locale pour ce code. Saisissez les valeurs de l’emballage.'],
+  'Replace the current form with this saved label? Recheck the package before using its values.': ['Sostituire il modulo con l’etichetta salvata? Verifica la confezione prima di usarne i valori.', '¿Sustituir el formulario por la etiqueta guardada? Comprueba el envase antes de usar los valores.', 'Remplacer le formulaire par l’étiquette enregistrée ? Vérifiez l’emballage avant d’utiliser les valeurs.'],
+  'Backup downloaded. Product names and entered nutrition values are included; keep it private.': ['Backup scaricato con nomi e valori inseriti: mantienilo privato.', 'Copia descargada con nombres y valores: mantenla privada.', 'Sauvegarde téléchargée avec noms et valeurs : gardez-la privée.'],
+  'No original data is available.': ['Nessun dato originale disponibile.', 'No hay datos originales disponibles.', 'Aucune donnée originale disponible.'],
+  'Export failed: {error}': ['Esportazione fallita: {error}', 'Exportación fallida: {error}', 'Échec de l’export : {error}'],
+  'Backup must be smaller than 2 MB.': ['Il backup deve essere inferiore a 2 MB.', 'La copia debe ser menor de 2 MB.', 'La sauvegarde doit faire moins de 2 Mo.'],
+  'Replace your local library with {count} labels from this backup? Imported values must be checked against current packages.': ['Sostituire la libreria con {count} etichette del backup? Verifica i valori sulla confezione attuale.', '¿Sustituir la biblioteca por {count} etiquetas de la copia? Comprueba los valores en los envases actuales.', 'Remplacer la bibliothèque par {count} étiquettes de la sauvegarde ? Vérifiez les valeurs sur les emballages actuels.'],
+  'Backup restored. Recheck imported labels before use.': ['Backup ripristinato. Verifica le etichette importate prima dell’uso.', 'Copia restaurada. Comprueba las etiquetas importadas antes de usarlas.', 'Sauvegarde restaurée. Vérifiez les étiquettes importées avant utilisation.'],
+  'Import failed: {error}. Existing data is unchanged.': ['Importazione fallita: {error}. I dati esistenti non sono cambiati.', 'Importación fallida: {error}. Los datos existentes no han cambiado.', 'Échec de l’import : {error}. Les données existantes sont inchangées.'],
+  'Permanently replace the unreadable SugarLens data with an empty library? Export the original first if you need it.': ['Sostituire definitivamente i dati illeggibili con una libreria vuota? Prima esporta gli originali se ti servono.', '¿Sustituir definitivamente los datos ilegibles por una biblioteca vacía? Exporta primero los originales si los necesitas.', 'Remplacer définitivement les données illisibles par une bibliothèque vide ? Exportez d’abord les originaux si nécessaire.'],
+  'SugarLens local labels reset.': ['Etichette locali reimpostate.', 'Etiquetas locales restablecidas.', 'Étiquettes locales réinitialisées.'],
+  'Reset failed: {error}': ['Reimpostazione fallita: {error}', 'Restablecimiento fallido: {error}', 'Échec de la réinitialisation : {error}'],
+  'Camera scanning needs HTTPS or localhost and browser support. Use manual entry instead.': ['La fotocamera richiede HTTPS o localhost e un browser compatibile. Usa l’inserimento manuale.', 'La cámara necesita HTTPS o localhost y un navegador compatible. Usa la entrada manual.', 'La caméra nécessite HTTPS ou localhost et un navigateur compatible. Utilisez la saisie manuelle.'],
+  'Scan failed: {error}. Try a clearer angle or manual entry.': ['Scansione fallita: {error}. Prova un’altra angolazione o inserisci a mano.', 'Escaneo fallido: {error}. Prueba otro ángulo o introduce a mano.', 'Échec du scan : {error}. Essayez un autre angle ou saisissez manuellement.'],
+  'Camera ready. Hold the barcode steady.': ['Fotocamera pronta. Tieni fermo il codice.', 'Cámara lista. Mantén el código quieto.', 'Caméra prête. Gardez le code immobile.'],
+  'Lookup paused while the app was in the background. Look up this barcode again or enter the package label.': ['Ricerca sospesa mentre l’app era in background. Cerca di nuovo o inserisci l’etichetta a mano.', 'Búsqueda suspendida mientras la app estaba en segundo plano. Busca de nuevo o introduce la etiqueta a mano.', 'Recherche suspendue pendant que l’app était en arrière-plan. Recherchez à nouveau ou saisissez l’étiquette.'],
+  'Reload to update the app? Unsaved label changes will be lost.': ['Ricaricare per aggiornare l’app? Le modifiche non salvate andranno perse.', '¿Recargar para actualizar? Los cambios sin guardar se perderán.', 'Recharger pour mettre à jour ? Les modifications non enregistrées seront perdues.'],
+  "Installation could not start: {error}. Use your browser's install menu.": ['Installazione non avviata: {error}. Usa il menu di installazione del browser.', 'La instalación no ha empezado: {error}. Usa el menú de instalación del navegador.', 'Installation non démarrée : {error}. Utilisez le menu d’installation du navigateur.'],
+  'Ready offline. Labels stay on this device.': ['Pronta offline. Le etichette restano sul dispositivo.', 'Lista sin conexión. Las etiquetas permanecen en el dispositivo.', 'Prête hors ligne. Les étiquettes restent sur l’appareil.'],
+  'This browser does not support offline installation. Local label storage still works.': ['Il browser non supporta l’installazione offline. Il salvataggio locale funziona comunque.', 'El navegador no admite instalación sin conexión. El almacenamiento local funciona.', 'Le navigateur ne prend pas en charge l’installation hors ligne. Le stockage local fonctionne.'],
+  'Offline installation is available in the production build, not the development server.': ['L’installazione offline è disponibile nella build di produzione, non nel server di sviluppo.', 'La instalación sin conexión está disponible en la compilación de producción, no en desarrollo.', 'L’installation hors ligne est disponible dans la version de production, pas sur le serveur de développement.'],
+  'Offline cache could not be prepared. Reconnect and reload to retry.': ['Cache offline non preparata. Riconnettiti e ricarica per riprovare.', 'No se ha preparado la caché. Conecta y recarga para reintentar.', 'Cache hors ligne non préparé. Reconnectez-vous et rechargez pour réessayer.'],
+  'Offline setup failed: {error}. Reconnect and reload to retry.': ['Preparazione offline fallita: {error}. Riconnettiti e ricarica.', 'Preparación sin conexión fallida: {error}. Conecta y recarga.', 'Préparation hors ligne échouée : {error}. Reconnectez-vous et rechargez.'],
+  'Camera permission was denied. Allow access in browser settings, or enter the barcode manually.': ['Permesso fotocamera negato. Consenti l’accesso nel browser o inserisci a mano.', 'Permiso de cámara denegado. Permite el acceso en el navegador o introduce a mano.', 'Autorisation de caméra refusée. Autorisez l’accès dans le navigateur ou saisissez manuellement.'],
+  'No camera found. Manual label entry still works.': ['Nessuna fotocamera trovata. L’inserimento manuale funziona.', 'No se ha encontrado cámara. La entrada manual funciona.', 'Aucune caméra trouvée. La saisie manuelle fonctionne.'],
+  'The camera is busy. Close other camera apps and try again.': ['Fotocamera occupata. Chiudi le altre app fotocamera e riprova.', 'La cámara está ocupada. Cierra otras apps de cámara y reintenta.', 'Caméra occupée. Fermez les autres apps de caméra et réessayez.'],
+  'Camera could not start: {error}. Manual entry is available.': ['Fotocamera non avviata: {error}. Puoi inserire a mano.', 'La cámara no ha empezado: {error}. Puedes introducir a mano.', 'Caméra non démarrée : {error}. La saisie manuelle est disponible.'],
+  'unknown error': ['errore sconosciuto', 'error desconocido', 'erreur inconnue'],
+  'Feedback could not stop: {error}.': ['Feedback non interrotto: {error}.', 'No se ha detenido la respuesta: {error}.', 'Signal non arrêté : {error}.'],
+  'Sound could not start: {error}. Visual results still work.': ['Suono non avviato: {error}. Il risultato visivo funziona.', 'Sonido no iniciado: {error}. El resultado visual funciona.', 'Son non démarré : {error}. Le résultat visuel fonctionne.'],
+  'Vibration was blocked by this browser. Colors and text still work.': ['Vibrazione bloccata dal browser. Colori e testo funzionano.', 'Vibración bloqueada por el navegador. Colores y texto funcionan.', 'Vibration bloquée par le navigateur. Couleurs et texte fonctionnent.'],
+  'Vibration is unavailable: {error}. Colors and text still work.': ['Vibrazione non disponibile: {error}. Colori e testo funzionano.', 'Vibración no disponible: {error}. Colores y texto funcionan.', 'Vibration indisponible : {error}. Couleurs et texte fonctionnent.'],
+  'Sound is paused by the browser. Tap Sound off and on to enable it.': ['Suono sospeso dal browser. Disattiva e riattiva Suono per abilitarlo.', 'Sonido suspendido por el navegador. Desactiva y reactiva Sonido para habilitarlo.', 'Son suspendu par le navigateur. Désactivez puis réactivez Son pour l’activer.'],
+  'Sound could not play: {error}. Visual results still work.': ['Suono non riprodotto: {error}. Il risultato visivo funziona.', 'Sonido no reproducido: {error}. El resultado visual funciona.', 'Son non joué : {error}. Le résultat visuel fonctionne.'],
+  'This barcode is not in Open Food Facts.': ['Questo codice non è presente su Open Food Facts.', 'Este código no está en Open Food Facts.', 'Ce code n’est pas présent sur Open Food Facts.'],
+  'Open Food Facts returned an unreadable product.': ['Open Food Facts ha restituito dati illeggibili.', 'Open Food Facts ha devuelto datos ilegibles.', 'Open Food Facts a renvoyé des données illisibles.'],
+  'The catalogue returned a different barcode.': ['Il catalogo ha restituito un codice diverso.', 'El catálogo ha devuelto otro código.', 'Le catalogue a renvoyé un autre code.'],
+  'This catalogue entry has no product name.': ['La voce del catalogo non ha un nome.', 'La entrada del catálogo no tiene nombre.', 'L’entrée du catalogue n’a pas de nom.'],
+  'This entry has no usable total sugar values per 100 g/ml. Copy the package label instead.': ['La voce non ha zuccheri totali utilizzabili per 100 g/ml. Copia l’etichetta a mano.', 'La entrada no tiene azúcares utilizables por 100 g/ml. Copia la etiqueta a mano.', 'L’entrée n’a pas de sucres utilisables pour 100 g/ml. Copiez l’étiquette manuellement.'],
+  'Too many lookups. Wait a minute or enter the label manually.': ['Troppe ricerche. Attendi un minuto o inserisci a mano.', 'Demasiadas búsquedas. Espera un minuto o introduce a mano.', 'Trop de recherches. Attendez une minute ou saisissez manuellement.'],
+  'Open Food Facts is rate-limiting requests. Try again later.': ['Open Food Facts sta limitando le richieste. Riprova più tardi.', 'Open Food Facts está limitando las peticiones. Reintenta más tarde.', 'Open Food Facts limite les requêtes. Réessayez plus tard.'],
+  'Open Food Facts is unavailable (HTTP {status}).': ['Open Food Facts non è disponibile (HTTP {status}).', 'Open Food Facts no está disponible (HTTP {status}).', 'Open Food Facts est indisponible (HTTP {status}).'],
+  'Enter {label} as a number, using a dot or comma for decimals.': ['Inserisci {label} come numero, usando punto o virgola per i decimali.', 'Introduce {label} como número, con punto o coma para los decimales.', 'Saisissez {label} comme nombre, avec un point ou une virgule pour les décimales.'],
+  '{label} must be greater than 0 to {max}.': ['{label}: deve essere maggiore di 0 e al massimo {max}.', '{label}: debe ser mayor que 0 y como máximo {max}.', '{label} : doit être supérieur à 0 et au plus {max}.'],
+  '{label} must be 0 to {max}.': ['{label}: deve essere tra 0 e {max}.', '{label}: debe estar entre 0 y {max}.', '{label} : doit être entre 0 et {max}.'],
+  'your amount': ['la quantità', 'la cantidad', 'la quantité'],
+  'your portion': ['la tua porzione', 'tu porción', 'votre portion'],
+  'total sugars': ['gli zuccheri totali', 'los azúcares totales', 'les sucres totaux'],
+  'total carbohydrate': ['i carboidrati totali', 'los hidratos totales', 'les glucides totaux'],
+  'label quantity': ['la quantità in etichetta', 'la cantidad de la etiqueta', 'la quantité de l’étiquette'],
+  'labelled serving size': ['la porzione indicata', 'la porción indicada', 'la portion indiquée'],
+  'Invalid {label}.': ['Valore non valido: {label}.', 'Valor no válido: {label}.', 'Valeur non valide : {label}.'],
+  'Enter a retail product barcode.': ['Inserisci un codice a barre di prodotto.', 'Introduce un código de producto.', 'Saisissez un code-barres de produit.'],
+  'Use an EAN-8, UPC-A, EAN-13 or GTIN-14 product code.': ['Usa un codice EAN-8, UPC-A, EAN-13 o GTIN-14.', 'Usa un código EAN-8, UPC-A, EAN-13 o GTIN-14.', 'Utilisez un code EAN-8, UPC-A, EAN-13 ou GTIN-14.'],
+  'The barcode check digit is invalid. Check the printed digits.': ['Cifra di controllo non valida. Verifica le cifre stampate.', 'Dígito de control no válido. Comprueba las cifras del envase.', 'Chiffre de contrôle non valide. Vérifiez les chiffres imprimés.'],
+  'Unsupported product code.': ['Codice prodotto non supportato.', 'Código de producto no compatible.', 'Code produit non pris en charge.'],
+  'Invalid product record.': ['Record prodotto non valido.', 'Registro de producto no válido.', 'Enregistrement de produit non valide.'],
+  'Invalid product identifier.': ['Identificativo prodotto non valido.', 'Identificador de producto no válido.', 'Identifiant de produit non valide.'],
+  'Enter a product name (up to 80 characters).': ['Inserisci un nome (massimo 80 caratteri).', 'Introduce un nombre (máximo 80 caracteres).', 'Saisissez un nom (80 caractères maximum).'],
+  'Choose food or drink.': ['Scegli alimento o bevanda.', 'Elige alimento o bebida.', 'Choisissez aliment ou boisson.'],
+  'Choose the basis printed on the label.': ['Scegli la base riportata sull’etichetta.', 'Elige la base indicada en la etiqueta.', 'Choisissez la base indiquée sur l’étiquette.'],
+  'Invalid barcode.': ['Codice a barre non valido.', 'Código de barras no válido.', 'Code-barres non valide.'],
+  'Per-100 labels must use a quantity of 100.': ['Le etichette per 100 devono usare quantità 100.', 'Las etiquetas por 100 deben usar cantidad 100.', 'Les étiquettes pour 100 doivent utiliser la quantité 100.'],
+  'The entered nutrients exceed 100 g per 100 g/ml. Check the label basis and quantity.': ['I nutrienti superano 100 g per 100 g/ml. Verifica base e quantità.', 'Los nutrientes superan 100 g por 100 g/ml. Comprueba la base y cantidad.', 'Les nutriments dépassent 100 g pour 100 g/ml. Vérifiez la base et la quantité.'],
+  'Sugars are part of total carbohydrate. Check the values and use the same label basis.': ['Gli zuccheri fanno parte dei carboidrati totali. Verifica i valori e usa la stessa base.', 'Los azúcares forman parte de los hidratos totales. Comprueba los valores y usa la misma base.', 'Les sucres font partie des glucides totaux. Vérifiez les valeurs et utilisez la même base.'],
+  'Invalid label entry date.': ['Data di inserimento non valida.', 'Fecha de entrada no válida.', 'Date de saisie non valide.'],
+  'Invalid catalogue source.': ['Fonte del catalogo non valida.', 'Fuente del catálogo no válida.', 'Source du catalogue non valide.'],
+  'A valid sugar amount and food/drink type are required.': ['Servono zuccheri validi e tipo alimento/bevanda.', 'Se requieren azúcares válidos y tipo alimento/bebida.', 'Des sucres valides et un type aliment/boisson sont requis.'],
+  'Use a SugarLens v1 backup with at most 1,000 products.': ['Usa un backup SugarLens v1 con massimo 1.000 prodotti.', 'Usa una copia SugarLens v1 con hasta 1.000 productos.', 'Utilisez une sauvegarde SugarLens v1 avec au plus 1 000 produits.'],
+  'Duplicate product identifiers in backup.': ['Identificativi duplicati nel backup.', 'Identificadores duplicados en la copia.', 'Identifiants dupliqués dans la sauvegarde.'],
+  'Duplicate product barcodes in backup.': ['Codici a barre duplicati nel backup.', 'Códigos de barras duplicados en la copia.', 'Codes-barres dupliqués dans la sauvegarde.'],
+  'Language preference could not be read: {error}. Using the device default.': ['Preferenza lingua illeggibile: {error}. Uso il default del dispositivo.', 'Preferencia de idioma ilegible: {error}. Se usa el idioma del dispositivo.', 'Préférence de langue illisible : {error}. Utilisation du réglage de l’appareil.'],
+  'Language not saved: {error}. Your choice applies for this visit only.': ['Lingua non salvata: {error}. La scelta vale solo per questa visita.', 'Idioma no guardado: {error}. Solo se aplica en esta visita.', 'Langue non enregistrée : {error}. Votre choix vaut pour cette visite uniquement.'],
+  'Invalid language preference.': ['Preferenza lingua non valida.', 'Preferencia de idioma no válida.', 'Préférence de langue non valide.'],
+  'Language follows your device region/time zone, then browser language. No GPS or location request. Change it anytime.': ['La lingua segue regione/fuso orario del dispositivo, poi la lingua del browser. Nessun GPS o richiesta di posizione. Cambiala quando vuoi.', 'El idioma sigue la región/zona horaria del dispositivo, después el idioma del navegador. Sin GPS ni petición de ubicación. Cámbialo cuando quieras.', 'La langue suit la région/le fuseau de l’appareil, puis la langue du navigateur. Aucun GPS ni demande de position. Changez-la à tout moment.'],
+};
+
+const patterns = Object.keys(messages).filter((key) => key.includes('{')).sort((a, b) => b.length - a.length).map((key) => {
+  const names = [];
+  const escaped = key.replace(/[.*+?^$()|[\]\\]/g, '\\$&').replace(/\{(\w+)\}/g, (_, name) => { names.push(name); return '(.+?)'; });
+  return { key, names, regex: new RegExp(`^${escaped}$`) };
+});
+
+export function detectLanguage(languages = [], timeZone = '') {
+  const regional = {
+    'Europe/Rome': 'it', 'Europe/Vatican': 'it', 'Europe/San_Marino': 'it',
+    'Europe/Paris': 'fr', 'Europe/Monaco': 'fr', 'America/Montreal': 'fr',
+    'Europe/Madrid': 'es', 'Atlantic/Canary': 'es', 'America/Mexico_City': 'es', 'America/Bogota': 'es',
+    'America/Lima': 'es', 'America/Santiago': 'es', 'America/Argentina/Buenos_Aires': 'es',
+    'Europe/London': 'en', 'America/New_York': 'en', 'America/Los_Angeles': 'en', 'Australia/Sydney': 'en',
+  }[timeZone];
+  if (regional) return regional;
+  return languages.map((value) => value.toLowerCase().split(/[-_]/)[0]).find((value) => Object.hasOwn(LANGUAGES, value)) || 'en';
+}
+
+export function setLanguage(value) {
+  if (!Object.hasOwn(LANGUAGES, value)) throw new Error('Invalid language preference.');
+  language = value;
+}
+export function getLanguage() { return language; }
+export function formatNumber(value) { return new Intl.NumberFormat(language, { maximumFractionDigits: 3 }).format(value); }
+export function formatDate(value) { return new Intl.DateTimeFormat(language, { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date(`${value}T00:00:00Z`)); }
+
+export function t(message, values = {}) {
+  let key = String(message);
+  if (!Object.hasOwn(messages, key)) {
+    const pattern = patterns.find((entry) => entry.regex.test(key));
+    if (!pattern) return key;
+    const captures = key.match(pattern.regex).slice(1);
+    key = pattern.key;
+    values = Object.fromEntries(pattern.names.map((name, index) => [name, captures[index]]));
+  }
+  const text = language === 'en' ? key : messages[key][['it', 'es', 'fr'].indexOf(language)];
+  return text.replace(/\{(\w+)\}/g, (_, name) => {
+    const value = String(values[name] ?? '');
+    if (name === 'date' && /^\d{4}-\d{2}-\d{2}$/.test(value)) return formatDate(value);
+    if (['low', 'low2', 'high', 'high2', 'max', 'count', 'amount'].includes(name) && /^\d+(\.\d+)?$/.test(value)) return formatNumber(Number(value));
+    return ['label', 'error', 'detail', 'type', 'basis'].includes(name) ? t(value) : value;
+  });
+}
+
+function translateNodes(root, remember) {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  while (walker.nextNode()) {
+    const node = walker.currentNode;
+    if (node.parentElement?.closest('[data-no-translate]')) continue;
+    const [, before, source, after] = node.textContent.match(/^(\s*)([\s\S]*?)(\s*)$/);
+    if (!source) continue;
+    node.textContent = before + t(source) + after;
+    if (remember) bindings.set(node, { source, before, after });
+  }
+  for (const element of root.querySelectorAll('[aria-label], [placeholder], [title]')) {
+    for (const attribute of ['aria-label', 'placeholder', 'title']) {
+      if (!element.hasAttribute(attribute)) continue;
+      const node = element.getAttributeNode(attribute);
+      const source = node.value;
+      node.value = t(source);
+      if (remember) bindings.set(node, { source, before: '', after: '' });
+    }
+  }
+}
+
+export function translateStatic(root) { translateNodes(root, true); }
+export function translatedMarkup(markup) {
+  const template = document.createElement('template');
+  template.innerHTML = markup;
+  translateNodes(template.content, false);
+  return template.innerHTML;
+}
+export function setText(element, source, values = {}) {
+  bindings.set(element, { source, values, before: '', after: '' });
+  element.textContent = t(source, values);
+}
+export function refreshTranslations() {
+  for (const [node, { source, values, before, after }] of bindings) {
+    if (!(node.ownerElement || node).isConnected) { bindings.delete(node); continue; }
+    if (node.nodeType === Node.ATTRIBUTE_NODE) node.value = t(source, values);
+    else node.textContent = before + t(source, values) + after;
+  }
+}
