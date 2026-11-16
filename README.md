@@ -54,6 +54,12 @@ reach. Forms and results open in a full-width sheet; inputs avoid automatic
 mobile zoom, and smaller screens stack label fields instead of squeezing them.
 See the [phone-sized result](public/preview-mobile.png).
 
+Sheets adjust to the visible screen when the keyboard opens, without scrolling
+the page behind them. Closing a changed label asks before discarding unsaved
+details or results. Saving clears an old library search so the new entry stays
+visible. Once labels are saved, a shorter phone header brings the library closer
+without hiding the medical limitations.
+
 ## What the score actually means
 
 The score is **an ordinal sugar-density band**, not a percentage or clinical score.

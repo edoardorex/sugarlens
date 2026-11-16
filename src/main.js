@@ -102,6 +102,32 @@ const productDialog = document.querySelector('#product-dialog');
 const cameraDialog = document.querySelector('#camera-dialog');
 const guideDialog = document.querySelector('#guide-dialog');
 let video = document.querySelector('#camera');
+let cleanForm = formSnapshot();
+
+function syncViewport() {
+  const viewport = window.visualViewport;
+  const root = document.documentElement;
+  if (!viewport || viewport.scale !== 1) {
+    root.style.removeProperty('--visible-height');
+    root.style.removeProperty('--keyboard-inset');
+    return;
+  }
+  root.style.setProperty('--visible-height', `${viewport.height}px`);
+  root.style.setProperty('--keyboard-inset', `${Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop)}px`);
+}
+window.visualViewport?.addEventListener('resize', syncViewport);
+window.visualViewport?.addEventListener('scroll', syncViewport);
+window.addEventListener('resize', syncViewport);
+syncViewport();
+
+function formSnapshot() {
+  return JSON.stringify([...new FormData(form)]);
+}
+
+function closeProduct() {
+  if (formSnapshot() !== cleanForm && !confirm('Discard this label\'s unsaved changes? Save it locally first if you want to keep it.')) return;
+  productDialog.close();
+}
 
 function notify(message, error = false) {
   clearTimeout(toastTimer);
@@ -138,6 +164,7 @@ function persist(next) {
 }
 
 function renderLibrary() {
+  document.body.classList.toggle('has-products', products.length > 0);
   document.querySelector('#saved-count').textContent = products.length;
   document.querySelector('#export').disabled = products.length === 0 || storageBlocked;
   const query = document.querySelector('#search').value.trim().toLocaleLowerCase();
@@ -194,6 +221,7 @@ function openProduct(product, barcode = '') {
   } else {
     form.elements.name.focus();
   }
+  cleanForm = formSnapshot();
 }
 
 function showResult() {
@@ -251,9 +279,14 @@ form.addEventListener('submit', (event) => {
 form.elements.type.addEventListener('change', updateBasis);
 form.elements.basis.addEventListener('change', updateBasis);
 document.querySelector('#manual-product').addEventListener('click', () => openProduct());
-document.querySelector('#close-product').addEventListener('click', () => productDialog.close());
+document.querySelector('#close-product').addEventListener('click', closeProduct);
+productDialog.addEventListener('cancel', (event) => {
+  event.preventDefault();
+  closeProduct();
+});
 document.querySelector('#edit-label').addEventListener('click', () => {
   fillForm(current);
+  if (currentSaved) cleanForm = formSnapshot();
   showForm();
   document.querySelector('#entry-note').textContent = 'Check the current package and keep both nutrient values on the same label basis.';
   form.elements.sugars.focus();
@@ -265,6 +298,9 @@ document.querySelector('#save-label').addEventListener('click', () => {
     if (persist(next)) {
       current = products.find((item) => item.id === current.id || (current.barcode && item.barcode === current.barcode));
       currentSaved = true;
+      cleanForm = formSnapshot();
+      document.querySelector('#search').value = '';
+      renderLibrary();
       showResult();
       notify('Saved on this device. Recheck the package next time: recipes can change.');
     }
@@ -295,6 +331,7 @@ document.querySelector('#recall').addEventListener('click', () => {
     current = product;
     currentSaved = true;
     fillForm(product);
+    cleanForm = formSnapshot();
     showResult();
   } catch (error) { notify(error.message, true); }
 });

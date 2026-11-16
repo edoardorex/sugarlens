@@ -202,3 +202,31 @@ test('a downloaded backup restores the label library', async ({ page }) => {
   await expect(page.locator('#saved-count')).toHaveText('1');
   await expect(page.getByRole('button', { name: 'Open saved label for Example crackers' })).toBeVisible();
 });
+
+test('unsaved label results are protected on close and Escape', async ({ page }) => {
+  await page.goto('/');
+  await checkLabel(page);
+  page.once('dialog', (dialog) => dialog.dismiss());
+  await page.locator('#close-product').click();
+  await expect(page.locator('#product-dialog')).toBeVisible();
+  await expect(page.locator('.score-main')).toContainText('Lower sugar');
+  page.once('dialog', (dialog) => dialog.accept());
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#product-dialog')).not.toBeVisible();
+  await page.getByRole('button', { name: 'Enter a label manually' }).click();
+  await expect(page.getByLabel('Product name', { exact: true })).toHaveValue('');
+  await expect(page.getByLabel('Total sugars (g)', { exact: true })).toHaveValue('');
+});
+
+test('a newly saved label is not hidden by an earlier library search', async ({ page }) => {
+  await page.goto('/');
+  await checkLabel(page);
+  await page.locator('#save-label').click();
+  await page.locator('#close-product').click();
+  await page.getByRole('searchbox').fill('not a matching product');
+  await checkLabel(page, { name: 'Example cereal' });
+  await page.locator('#save-label').click();
+  await page.locator('#close-product').click();
+  await expect(page.getByRole('searchbox')).toHaveValue('');
+  await expect(page.getByRole('button', { name: 'Open saved label for Example cereal' })).toBeVisible();
+});
