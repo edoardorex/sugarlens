@@ -1,5 +1,5 @@
-const CACHE = 'sugarlens-882655a11c5e9951';
-const ASSETS = ["./","./index.html","./manifest.webmanifest","./icon.svg","./icon-192.png","./icon-512.png","./assets/index-Cjwd3xVH.css","./assets/esm-DDGD1VIp.js","./assets/index-BM4X886q.js","./assets/esm-DSN73KLr.js"];
+const CACHE = 'sugarlens-671046758a0d5008';
+const ASSETS = ["./","./index.html","./manifest.webmanifest","./icon.svg","./icon-192.png","./icon-512.png","./assets/index-DmcNWuM6.css","./assets/esm-DDGD1VIp.js","./assets/index-CF9wVLeY.js","./assets/esm-DSN73KLr.js","./assets/vision-worker-BAMIQfJi.js"];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS)));
